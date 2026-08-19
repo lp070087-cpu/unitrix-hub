@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unitrix Hub — Tour pelo Sistema</title>
+<style>
+:root{--bg:#08080A;--s:#0E0E11;--sh:#141418;--b:rgba(255,255,255,.06);--bs:rgba(255,255,255,.10);--fg:#E8E8E8;--fm:#888;--fd:#555;--a:#B8FF2E;--ah:#A3EE1A;--ag:rgba(184,255,46,.10);color-scheme:dark}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;overflow-x:hidden}
+body{background:var(--bg);color:var(--fg);font-family:'Inter','Segoe UI',system-ui,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.5;overflow-x:hidden}
+
+/* ambient */
+.ambient{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.012;background-image:repeating-linear-gradient(60deg,var(--a)0,var(--a)1px,transparent 1px,transparent 28px),repeating-linear-gradient(-60deg,var(--a)0,var(--a)1px,transparent 1px,transparent 28px)}
+.blob{position:fixed;border-radius:50%;pointer-events:none;z-index:0;filter:blur(120px);opacity:.025}
+.blob-1{width:350px;height:350px;background:var(--a);top:-100px;right:-100px}
+.blob-2{width:280px;height:280px;background:var(--a);bottom:-80px;left:-80px}
+
+/* utils */
+.container{max-width:1200px;margin:0 auto;padding:0 40px;position:relative;z-index:1}
+section{padding:80px 0;position:relative;z-index:1}
+.section-tag{display:inline-flex;align-items:center;gap:10px;font-size:10px;font-weight:700;letter-spacing:.35em;color:var(--a);text-transform:uppercase;margin-bottom:12px}
+.section-tag::before{content:'';width:16px;height:1px;background:var(--a);opacity:.5}
+.section-title{font-size:clamp(28px,3.5vw,40px);font-weight:900;letter-spacing:-.03em;color:#FFF;line-height:1.1}
+.section-sub{font-size:15px;color:var(--fm);max-width:500px;margin-top:10px;line-height:1.5}
+.divider{width:40px;height:1px;background:var(--a);opacity:.25;margin:24px 0 36px}
+.btn{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;padding:14px 28px;transition:all .25s;border-radius:4px;border:none;cursor:pointer}
+.btn-primary{background:var(--a);color:var(--bg)}
+.btn-primary:hover{background:var(--ah);transform:translateY(-2px);box-shadow:0 8px 28px rgba(184,255,46,.25)}
+.btn-ghost{color:var(--a);border:1px solid rgba(184,255,46,.2);background:transparent}
+.btn-ghost:hover{border-color:var(--a);background:rgba(184,255,46,.04);transform:translateY(-2px)}
+
+/* hero */
+.hero{min-height:100vh;display:flex;align-items:center;text-align:center}
+.hero-inner{max-width:700px;margin:0 auto}
+
+/* ─── SCREEN MOCKUP ─── */
+.screen{margin-top:48px;background:var(--s);border:1px solid var(--b);border-radius:12px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.6),0 0 80px rgba(184,255,46,.02)}
+.screen-header{display:flex;align-items:center;gap:8px;padding:12px 16px;background:rgba(0,0,0,.3);border-bottom:1px solid var(--b)}
+.screen-dot{width:10px;height:10px;border-radius:50%}
+.screen-dot.r{background:#FF5F57}.screen-dot.y{background:#FFBD2E}.screen-dot.g{background:#27CA40}
+.screen-title{font-size:11px;color:var(--fd);margin-left:8px;letter-spacing:.05em}
+.screen-body{display:grid;grid-template-columns:220px 1fr;min-height:520px}
+.screen-sidebar{background:rgba(0,0,0,.2);border-right:1px solid var(--b);padding:16px 0;display:flex;flex-direction:column}
+.sb-item{display:flex;align-items:center;gap:10px;padding:9px 16px;font-size:12px;color:var(--fm);transition:all .15s;margin:0 8px;border-radius:6px;text-decoration:none}
+.sb-item:hover{color:var(--fg);background:var(--sh)}
+.sb-item.active{color:var(--a);background:var(--ag);font-weight:600}
+.sb-item svg{width:15px;height:15px;flex-shrink:0}
+.sb-logo{display:flex;align-items:center;gap:8px;padding:8px 16px;margin-bottom:16px;border-bottom:1px solid var(--b);padding-bottom:16px;font-weight:900;font-size:13px;letter-spacing:-.01em;color:#FFF}
+.sb-logo svg{width:18px;height:18px}
+.sb-footer{margin-top:auto;padding:12px 16px;border-top:1px solid var(--b)}
+.sb-footer button{display:flex;align-items:center;gap:10px;width:100%;padding:8px 12px;border-radius:6px;font-size:12px;color:var(--fd);background:none;border:none;cursor:pointer;transition:all .15s;font-family:inherit}
+.sb-footer button:hover{color:#EF4444;background:var(--sh)}
+
+.screen-main{padding:24px 28px;overflow-y:auto}
+.sm-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+.sm-header h2{font-size:16px;font-weight:700;color:#FFF}
+.sm-header-actions{display:flex;align-items:center;gap:12px}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--ag);border:1px solid rgba(184,255,46,.2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--a)}
+
+/* stats row */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.stat-card{background:rgba(0,0,0,.2);border:1px solid var(--b);border-radius:8px;padding:16px}
+.stat-card-label{font-size:10px;font-weight:600;letter-spacing:.08em;color:var(--fd);text-transform:uppercase;margin-bottom:6px}
+.stat-card-val{font-size:24px;font-weight:900;color:#FFF;font-family:'JetBrains Mono','SF Mono',monospace;letter-spacing:-.02em}
+.stat-card-sub{font-size:11px;color:var(--fd);margin-top:2px}
+.stat-icon{width:32px;height:32px;border-radius:6px;background:var(--ag);display:flex;align-items:center;justify-content:center;margin-bottom:10px;color:var(--a)}
+
+/* table */
+.table-wrap{background:rgba(0,0,0,.2);border:1px solid var(--b);border-radius:8px;overflow:hidden}
+.table-header{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;padding:10px 16px;background:rgba(0,0,0,.2);border-bottom:1px solid var(--b);font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--fd);text-transform:uppercase}
+.table-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;padding:12px 16px;border-bottom:1px solid var(--b);font-size:12px;align-items:center;transition:background .15s}
+.table-row:hover{background:var(--sh)}
+.table-row:last-child{border-bottom:0}
+.badge{display:inline-block;font-size:10px;font-weight:600;padding:3px 10px;border-radius:20px;text-transform:uppercase}
+.badge-green{background:rgba(184,255,46,.12);color:var(--a)}
+.badge-yellow{background:rgba(250,204,21,.12);color:#FACC15}
+.badge-blue{background:rgba(56,189,248,.12);color:#38BDF8}
+.badge-gray{background:rgba(255,255,255,.06);color:var(--fd)}
+
+/* second screen variation: client area */
+.screen-main-client{padding:24px 28px;overflow-y:auto}
+.progress-bar-wrap{width:100%;height:6px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden;margin-top:8px}
+.progress-bar-fill{height:100%;background:var(--a);border-radius:3px;transition:width .6s ease}
+.milestone{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--b);font-size:12px}
+.milestone:last-child{border-bottom:0}
+.milestone-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.milestone-dot.done{background:var(--a)}
+.milestone-dot.active{background:var(--a);animation:pulse-dot 2s ease-in-out infinite}
+.milestone-dot.pending{background:rgba(255,255,255,.1)}
+
+@keyframes pulse-dot{0%,100%{opacity:.4}50%{opacity:1}}
+
+/* contract screen */
+.contract-paper{background:rgba(0,0,0,.3);border:1px solid var(--b);border-radius:8px;padding:24px 28px;max-width:700px;margin:0 auto}
+.contract-paper h3{font-size:15px;font-weight:700;color:#FFF;margin-bottom:16px}
+.contract-paper p{font-size:12px;color:var(--fm);line-height:1.7;margin-bottom:10px}
+.contract-field{display:flex;gap:8px;margin:4px 0;font-size:12px}
+.contract-label{color:var(--fd);min-width:120px}
+.contract-val{color:var(--fg);font-weight:600}
+.contract-check{display:flex;align-items:flex-start;gap:10px;margin:16px 0;padding:12px;background:rgba(184,255,46,.04);border:1px solid rgba(184,255,46,.1);border-radius:6px;font-size:12px;color:var(--fm)}
+.contract-check input{margin-top:2px;accent-color:var(--a)}
+.signature-area{margin-top:20px;padding:16px;background:rgba(0,0,0,.3);border:1px dashed var(--b);border-radius:8px;text-align:center}
+.signature-area p{font-size:11px;color:var(--fd);margin-bottom:8px}
+.signature-canvas{width:100%;height:100px;background:rgba(255,255,255,.02);border-radius:4px;margin-bottom:8px}
+
+/* modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:100;opacity:0;pointer-events:none;transition:opacity .3s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal-box{background:var(--s);border:1px solid var(--b);border-radius:12px;padding:28px;max-width:480px;width:90%}
+.modal-box h3{font-size:15px;font-weight:700;color:#FFF;margin-bottom:16px}
+.modal-field{margin-bottom:14px}
+.modal-field label{display:block;font-size:11px;font-weight:600;color:var(--fd);margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
+.modal-field input,.modal-field select{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--b);border-radius:6px;padding:10px 12px;font-size:13px;color:var(--fg);font-family:inherit}
+.modal-field input:focus,.modal-field select:focus{outline:0;border-color:rgba(184,255,46,.3)}
+
+/* login screen */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:32px}
+.login-box{background:var(--s);border:1px solid var(--b);border-radius:12px;padding:36px;width:360px}
+.login-logo{text-align:center;margin-bottom:28px}
+.login-logo svg{width:44px;height:44px;margin-bottom:12px}
+.login-logo h1{font-size:20px;font-weight:900;letter-spacing:-.02em;color:#FFF}
+.login-logo h1 span{color:var(--a)}
+.login-field{margin-bottom:16px}
+.login-field label{display:block;font-size:11px;font-weight:600;color:var(--fd);margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
+.login-field input{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--b);border-radius:6px;padding:10px 12px;font-size:13px;color:var(--fg);font-family:inherit}
+.login-field input:focus{outline:0;border-color:rgba(184,255,46,.3)}
+.login-box .btn{width:100%;justify-content:center;margin-top:8px}
+
+/* tour nav */
+.tour-nav{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:50;display:flex;gap:6px;background:var(--s);border:1px solid var(--b);border-radius:40px;padding:6px}
+.tour-dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.1);transition:all .3s;cursor:pointer;border:none}
+.tour-dot.active{background:var(--a);width:28px;border-radius:6px}
+.tour-arrow{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;color:var(--fd);font-size:14px;transition:all .2s}
+.tour-arrow:hover{background:rgba(255,255,255,.1);color:#FFF}
+
+/* responsive */
+@media(max-width:900px){
+  .screen-body{grid-template-columns:60px 1fr}
+  .screen-sidebar .sb-item span,.sb-logo span,.sb-footer button span{display:none}
+  .stats-row{grid-template-columns:repeat(2,1fr)}
+  .table-header,.table-row{grid-template-columns:1.5fr 1fr 1fr}
+  .container{padding:0 20px}
+  section{padding:50px 0}
+}
+@media(max-width:600px){
+  .stats-row{grid-template-columns:1fr}
+  .table-header,.table-row{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="ambient"></div>
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+
+<!-- ═══════════ TOUR NAV ═══════════ -->
+<div class="tour-nav" id="tourNav">
+  <button class="tour-arrow" onclick="prevScreen()" title="Anterior">←</button>
+  <button class="tour-dot active" data-screen="0" onclick="goScreen(0)" title="Login"></button>
+  <button class="tour-dot" data-screen="1" onclick="goScreen(1)" title="Dashboard Admin"></button>
+  <button class="tour-dot" data-screen="2" onclick="goScreen(2)" title="Clientes"></button>
+  <button class="tour-dot" data-screen="3" onclick="goScreen(3)" title="Detalhes"></button>
+  <button class="tour-dot" data-screen="4" onclick="goScreen(4)" title="Contrato"></button>
+  <button class="tour-dot" data-screen="5" onclick="goScreen(5)" title="Área Cliente"></button>
+  <button class="tour-dot" data-screen="6" onclick="goScreen(6)" title="Projeto"></button>
+  <button class="tour-arrow" onclick="nextScreen()" title="Próximo">→</button>
+</div>
+
+<!-- ═══════════ SCREEN 0: LOGIN ═══════════ -->
+<section class="screen-section" id="screen0">
+  <div class="login-wrap">
+    <div class="login-box">
+      <div class="login-logo">
+        <svg viewBox="0 0 200 200"><line x1="32" y1="100" x2="168" y2="100" stroke="#B8FF2E" stroke-width="4" stroke-linecap="round"/><line x1="46.5" y1="150" x2="153.5" y2="50" stroke="#B8FF2E" stroke-width="4" stroke-linecap="round"/><line x1="46.5" y1="50" x2="153.5" y2="150" stroke="#B8FF2E" stroke-width="4" stroke-linecap="round"/><circle cx="100" cy="100" r="8" fill="#B8FF2E"/></svg>
+        <h1>Unitri<span>x</span> Hub</h1>
+        <p style="font-size:11px;color:var(--fd);margin-top:4px;letter-spacing:.1em;text-transform:uppercase">Plataforma de Relacionamento</p>
+      </div>
+      <div class="login-field">
+        <label>Email</label>
+        <input type="email" value="lo070087@gmail.com" readonly>
+      </div>
+      <div class="login-field">
+        <label>Senha</label>
+        <input type="password" value="••••••••" readonly>
+      </div>
+      <button class="btn btn-primary">Entrar no Sistema →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ SCREEN 1: DASHBOARD ADMIN ═══════════ -->
+<section class="screen-section" id="screen1">
+  <div class="container">
+    <div class="section-tag">Tela 1</div>
+    <h2 class="section-title">Dashboard Administrativo</h2>
+    <p class="section-sub">Visão geral completa do seu negócio. Métricas, clientes recentes, pagamentos e projetos ativos — tudo em tempo real.</p>
+
+    <div class="screen">
+      <div class="screen-header"><div class="screen-dot r"></div><div class="screen-dot y"></div><div class="screen-dot g"></div><span class="screen-title">Unitrix Hub — Dashboard — Admin</span></div>
+      <div class="screen-body">
+        <div class="screen-sidebar">
+          <div class="sb-logo">
+            <svg viewBox="0 0 200 200"><line x1="32" y1="100" x2="168" y2="100" stroke="#B8FF2E" stroke-width="5" stroke-linecap="round"/><line x1="46.5" y1="150" x2="153.5" y2="50" stroke="#B8FF2E" stroke-width="5" stroke-linecap="round"/><line x1="46.5" y1="50" x2="153.5" y2="150" stroke="#B8FF2E" stroke-width="5" stroke-linecap="round"/><circle cx="100" cy="100" r="9" fill="#B8FF2E"/></svg>
+            <span>Unitri<span style="color:var(--a)">x</span></span>
+          </div>
+          <a class="sb-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg> <span>Dashboard</span></a>
+          <a class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> <span>Clientes</span></a>
+          <a class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> <span>Apresentações</span></a>
+          <a class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> <span>Contratos</span></a>
+          <a class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> <span>Financeiro</span></a>
+          <a class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> <span>Projetos</span></a>
+          <a class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg> <span>Planos</span></a>
+          <a class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 4v4"/><path d="M2 8h20"/><path d="M6 4v4"/></svg> <span>Assinaturas</span></a>
+          <div class="sb-footer">
+            <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> <span>Sair</span></button>
+          </div>
+        </div>
+        <div class="screen-main">
+          <div class="sm-header">
+            <div>
+              <h2>Dashboard</h2>
+              <p style="font-size:11px;color:var(--fd);margin-top:2px">Bem-vindo de volta, Unitrix Admin</p>
+            </div>
+            <div class="sm-header-actions">
+              <div style="width:8px;height:8px;border-radius:50%;background:var(--a);margin-right:8px"></div>
+              <span style="font-size:11px;color:var(--fd)">Online</span>
+              <div class="avatar">U</div>
+            </div>
+          </div>
+
+          <div class="stats-row">
+            <div class="stat-card">
+              <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+              <div class="stat-card-label">Total de Clientes</div>
+              <div class="stat-card-val">5</div>
+              <div class="stat-card-sub">+2 este mês</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></div>
+              <div class="stat-card-label">Projetos Ativos</div>
+              <div class="stat-card-val">2</div>
+              <div class="stat-card-sub">1 em desenvolvimento</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+              <div class="stat-card-label">Receita Total</div>
+              <div class="stat-card-val">R$ 36.500</div>
+              <div class="stat-card-sub">3 pagamentos recebidos</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+              <div class="stat-card-label">Pendentes</div>
+              <div class="stat-card-val">R$ 36.500</div>
+              <div class="stat-card-sub">2 pagamentos aguardando</div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+            <div class="table-wrap">
+              <div class="table-header"><span>Cliente</span><span>Projeto</span><span>Status</span></div>
+              <div class="table-row"><span style="font-weight:600">Ricardo Almeida</span><span>SaaS</span><span class="badge badge-green">Em Andamento</span></div>
+              <div class="table-row"><span style="font-weight:600">Marina Costa</span><span>Sist. Web</span><span class="badge badge-yellow">Planejamento</span></div>
+              <div class="table-row"><span style="font-weight:600">Pedro Santos</span><span>App Mobile</span><span class="badge badge-blue">Proposta</span></div>
+              <div class="table-row"><span style="font-weight:600">Carlos Mendes</span><span>ERP</span><span class="badge badge-green">Concluído</span></div>
+            </div>
+            <div class="table-wrap">
+              <div class="table-header"><span>Pagamento</span><span>Valor</span><span>Status</span></div>
+              <div class="table-row"><span style="font-weight:600">Entrada — Fintech Pro</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px">R$ 22.500</span><span class="badge badge-green">Pago</span></div>
+              <div class="table-row"><span style="font-weight:600">Saldo — Fintech Pro</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px">R$ 22.500</span><span class="badge badge-yellow">Pendente</span></div>
+              <div class="table-row"><span style="font-weight:600">Entrada — Clínica Vida</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px">R$ 14.000</span><span class="badge badge-yellow">Pendente</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ SCREEN 2: GESTÃO DE CLIENTES ═══════════ -->
+<section class="screen-section" id="screen2">
+  <div class="container">
+    <div class="section-tag">Tela 2</div>
+    <h2 class="section-title">Gestão de Clientes</h2>
+    <p class="section-sub">CRUD completo de clientes com status do funil comercial. Cadastre, edite e acompanhe cada lead até a entrega.</p>
+
+    <div class="screen">
+      <div class="screen-header"><div class="screen-dot r"></div><div class="screen-dot y"></div><div class="screen-dot g"></div><span class="screen-title">Unitrix Hub — Clientes — Admin</span></div>
+      <div class="screen-body">
+        <div class="screen-sidebar">
+          <div class="sb-logo">
+            <svg viewBox="0 0 200 200"><line x1="32" y1="100" x2="168" y2="100" stroke="#B8FF2E" stroke-width="5" stroke-linecap="round"/><line x1="46.5" y1="150" x2="153.5" y2="50" stroke="#B8FF2E" stroke-width="5" stroke-linecap="round"/><line x1="46.5" y1="50" x2="153.5" y2="150" stroke="#B8FF2E" stroke-width="5" stroke-linecap="round"/><circle cx="100" cy="100" r="9" fill="#B8FF2E"/></svg>
+            <span>Unitri<span style="color:var(--a)">x</span></span>
+          </div>
+          <a class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg> <span>Dashboard</span></a>
+          <a class="sb-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg> <span>Clientes</span></a>
+          <a class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/></svg> <span>Apresentações</span></a>
+          <a class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg> <span>Contratos</span></a>
+          <a class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/></svg> <span>Financeiro</span></a>
+          <a class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5"/></svg> <span>Projetos</span></a>
+          <div class="sb-footer"><button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> <span>Sair</span></button></div>
+        </div>
+        <div class="screen-main">
+          <div class="sm-header">
+            <div>
+              <h2>Clientes</h2>
+              <p style="font-size:11px;color:var(--fd);margin-top:2px">5 clientes cadastrados</p>
+            </div>
+            <button class="btn btn-primary" style="padding:8px 16px;font-size:11px">+ Novo Cliente</button>
+          </div>
+
+          <div class="table-wrap">
+            <div class="table-header"><span>Nome / Empresa</span><span>Email</span><span>Tipo Projeto</span><span>Status</span></div>
+            <div class="table-row"><span><span style="font-weight:600;color:#FFF">Ricardo Almeida</span><br><span style="font-size:10px;color:var(--fd)">Fintech Pro</span></span><span>ricardo@fintechpro.com.br</span><span>SaaS</span><span class="badge badge-green">Em Andamento</span></div>
+            <div class="table-row"><span><span style="font-weight:600;color:#FFF">Marina Costa</span><br><span style="font-size:10px;color:var(--fd)">Clínica Vida</span></span><span>marina@clinicavida.com.br</span><span>Sistema Web</span><span class="badge badge-blue">Contratado</span></div>
+            <div class="table-row"><span><span style="font-weight:600;color:#FFF">Pedro Santos</span><br><span style="font-size:10px;color:var(--fd)">EduTech Brasil</span></span><span>pedro@edutech.com.br</span><span>App Mobile</span><span class="badge badge-blue">Proposta Enviada</span></div>
+            <div class="table-row"><span><span style="font-weight:600;color:#FFF">Ana Oliveira</span><br><span style="font-size:10px;color:var(--fd)">Green E-commerce</span></span><span>ana@greenecommerce.com.br</span><span>E-commerce</span><span class="badge badge-gray">Lead</span></div>
+            <div class="table-row"><span><span style="font-weight:600;color:#FFF">Carlos Mendes</span><br><span style="font-size:10px;color:var(--fd)">LogPro Sistemas</span></span><span>carlos@logpro.com.br</span><span>ERP</span><span class="badge badge-green">Concluído</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ SCREEN 3: DETALHES DO CLIENTE ═══════════ -->
+<section class="screen-section" id="screen3">
+  <div class="container">
+    <div class="section-tag">Tela 3</div>
+    <h2 class="section-title">Detalhes do Cliente</h2>
+    <p class="section-sub">Visão 360° de cada cliente. Perfil completo, projetos, contratos, apresentações e pagamentos — tudo centralizado.</p>
+
+    <div class="screen">
+      <div class="screen-header"><div class="screen-dot r"></div><div class="screen-dot y"></div><div class="screen-dot g"></div><span class="screen-title">Unitrix Hub — Ricardo Almeida — Admin</span></div>
+      <div class="screen-body">
+        <div class="screen-sidebar" style="padding-top:16px">
+          <a class="sb-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> <span>Visão Geral</span></a>
+          <a class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/></svg> <span>Apresentações</span></a>
+          <a class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg> <span>Contratos</span></a>
+          <a class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/></svg> <span>Pagamentos</span></a>
+          <a class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5"/></svg> <span>Projetos</span></a>
+        </div>
+        <div class="screen-main">
+          <div class="sm-header">
+            <div>
+              <h2>Ricardo Almeida</h2>
+              <p style="font-size:11px;color:var(--fd)">Fintech Pro · São Paulo · <span style="color:var(--a)">Em Andamento</span></p>
+            </div>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-ghost" style="padding:6px 14px;font-size:10px">Editar</button>
+              <button class="btn btn-primary" style="padding:6px 14px;font-size:10px">+ Criar Apresentação</button>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+            <div class="stat-card"><div class="stat-card-label">Email</div><div class="stat-card-val" style="font-size:13px">ricardo@fintechpro.com.br</div></div>
+            <div class="stat-card"><div class="stat-card-label">WhatsApp</div><div class="stat-card-val" style="font-size:13px">(11) 98765-4321</div></div>
+            <div class="stat-card"><div class="stat-card-label">Tipo de Projeto</div><div class="stat-card-val" style="font-size:13px">SaaS</div></div>
+            <div class="stat-card"><div class="stat-card-label">Orçamento</div><div class="stat-card-val" style="font-size:13px;color:var(--a)">R$ 45.000,00</div></div>
+          </div>
+
+          <div style="margin-top:20px">
+            <h4 style="font-size:12px;font-weight:700;color:#FFF;margin-bottom:10px">Projeto: Fintech Pro — Plataforma SaaS</h4>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+              <span style="font-size:11px;color:var(--fd)">Progresso:</span>
+              <span style="font-size:12px;font-weight:800;color:var(--a);font-family:'JetBrains Mono',monospace">35%</span>
+            </div>
+            <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:35%"></div></div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px">
+              <div class="milestone"><div class="milestone-dot done"></div><span style="text-decoration:line-through;color:var(--fd);font-size:11px">Planejamento</span></div>
+              <div class="milestone"><div class="milestone-dot done"></div><span style="text-decoration:line-through;color:var(--fd);font-size:11px">Design UI/UX</span></div>
+              <div class="milestone"><div class="milestone-dot active"></div><span style="font-size:11px">Desenvolvimento Backend</span></div>
+              <div class="milestone"><div class="milestone-dot pending"></div><span style="font-size:11px">Desenvolvimento Frontend</span></div>
+              <div class="milestone"><div class="milestone-dot pending"></div><span style="font-size:11px">Testes e QA</span></div>
+              <div class="milestone"><div class="milestone-dot pending"></div><span style="font-size:11px">Deploy e Entrega</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ SCREEN 4: CONTRATO + ASSINATURA ═══════════ -->
+<section class="screen-section" id="screen4">
+  <div class="container">
+    <div class="section-tag">Tela 4</div>
+    <h2 class="section-title">Contrato Inteligente + Assinatura Digital</h2>
+    <p class="section-sub">Contratos gerados automaticamente com preenchimento de variáveis. Confirmação de leitura obrigatória e assinatura digital com registro de IP, data, hora e navegador.</p>
+
+    <div class="screen">
+      <div class="screen-header"><div class="screen-dot r"></div><div class="screen-dot y"></div><div class="screen-dot g"></div><span class="screen-title">Unitrix Hub — Contrato #CTR-001 — Ricardo Almeida</span></div>
+      <div class="screen-body">
+        <div class="screen-sidebar" style="padding-top:16px">
+          <a class="sb-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg> <span>Contrato</span></a>
+          <a class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg> <span>Histórico</span></a>
+        </div>
+        <div class="screen-main">
+          <div class="sm-header">
+            <div>
+              <h2>Contrato de Prestação de Serviços</h2>
+              <p style="font-size:11px;color:var(--fd)">Status: <span style="color:#FACC15">Aguardando Assinatura</span></p>
+            </div>
+          </div>
+
+          <div class="contract-paper">
+            <h3>CONTRATO DE DESENVOLVIMENTO DE SOFTWARE</h3>
+            <p><strong>CONTRATANTE:</strong></p>
+            <div class="contract-field"><span class="contract-label">Nome:</span><span class="contract-val">Ricardo Almeida</span></div>
+            <div class="contract-field"><span class="contract-label">CPF/CNPJ:</span><span class="contract-val">123.456.789-00</span></div>
+            <div class="contract-field"><span class="contract-label">Empresa:</span><span class="contract-val">Fintech Pro</span></div>
+
+            <p style="margin-top:14px"><strong>CONTRATADA: Unitrix</strong></p>
+
+            <p style="margin-top:14px"><strong>ESCOPO:</strong> Desenvolvimento de plataforma SaaS de gestão financeira com dashboard, relatórios e integração bancária.</p>
+
+            <div class="contract-field"><span class="contract-label">Prazo:</span><span class="contract-val">01/06/2026 a 01/09/2026 (45 dias)</span></div>
+            <div class="contract-field"><span class="contract-label">Valor Total:</span><span class="contract-val" style="color:var(--a)">R$ 45.000,00</span></div>
+            <div class="contract-field"><span class="contract-label">Entrada (50%):</span><span class="contract-val">R$ 22.500,00</span></div>
+            <div class="contract-field"><span class="contract-label">Saldo (50%):</span><span class="contract-val">R$ 22.500,00</span></div>
+
+            <p style="margin-top:12px;font-size:11px;line-height:1.7">O contratante declara ter recebido e analisado a apresentação comercial completa antes da assinatura deste contrato, estando ciente do escopo, prazos e valores acordados. O cancelamento em até 3 dias corridos após a assinatura gera reembolso de 80% do valor pago. Após 3 dias, o reembolso é de 40%.</p>
+
+            <div class="contract-check">
+              <input type="checkbox" checked disabled>
+              <span>☑ Confirmo que li todo o contrato e estou de acordo com os termos e condições.</span>
+            </div>
+            <div class="contract-check">
+              <input type="checkbox" checked disabled>
+              <span>☑ Autorizo o início do desenvolvimento após o pagamento da entrada de 50%.</span>
+            </div>
+
+            <div class="signature-area">
+              <p>Assinatura Digital do Contratante</p>
+              <div class="signature-canvas" style="display:flex;align-items:center;justify-content:center">
+                <svg viewBox="0 0 400 80" style="width:100%;height:100%">
+                  <path d="M20 50 Q50 20 80 45 T140 40 T200 48 T260 35 T320 42 T380 38" fill="none" stroke="#B8FF2E" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+                </svg>
+              </div>
+              <p style="font-size:10px;color:var(--fd)">Assinado em: 05/06/2026 às 14:32 · IP: 187.45.xxx.xx · Chrome 126 · Windows</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ SCREEN 5: ÁREA DO CLIENTE ═══════════ -->
+<section class="screen-section" id="screen5">
+  <div class="container">
+    <div class="section-tag">Tela 5</div>
+    <h2 class="section-title">Área do Cliente</h2>
+    <p class="section-sub">O que seu cliente vê ao fazer login. Dashboard com projeto atual, contratos, pagamentos e apresentações recebidas.</p>
+
+    <div class="screen">
+      <div class="screen-header"><div class="screen-dot r"></div><div class="screen-dot y"></div><div class="screen-dot g"></div><span class="screen-title">Unitrix Hub — Dashboard — Ricardo Almeida</span></div>
+      <div class="screen-body">
+        <div class="screen-sidebar">
+          <div class="sb-logo">
+            <svg viewBox="0 0 200 200"><line x1="32" y1="100" x2="168" y2="100" stroke="#B8FF2E" stroke-width="5" stroke-linecap="round"/><line x1="46.5" y1="150" x2="153.5" y2="50" stroke="#B8FF2E" stroke-width="5" stroke-linecap="round"/><line x1="46.5" y1="50" x2="153.5" y2="150" stroke="#B8FF2E" stroke-width="5" stroke-linecap="round"/><circle cx="100" cy="100" r="9" fill="#B8FF2E"/></svg>
+            <span>Unitri<span style="color:var(--a)">x</span></span>
+          </div>
+          <a class="sb-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/></svg> <span>Dashboard</span></a>
+          <a class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/></svg> <span>Apresentações</span></a>
+          <a class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg> <span>Contratos</span></a>
+          <a class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5"/></svg> <span>Projetos</span></a>
+          <a class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/></svg> <span>Pagamentos</span></a>
+          <a class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> <span>Notificações</span></a>
+          <div class="sb-footer"><button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/></svg> <span>Sair</span></button></div>
+        </div>
+        <div class="screen-main-client">
+          <div class="sm-header">
+            <div>
+              <h2>Bem-vindo, Ricardo</h2>
+              <p style="font-size:11px;color:var(--fd);margin-top:2px">Fintech Pro</p>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:6px;height:6px;border-radius:50%;background:var(--a)"></div>
+              <span style="font-size:10px;color:var(--fd)">1 notificação</span>
+            </div>
+          </div>
+
+          <div class="stats-row" style="margin-bottom:20px">
+            <div class="stat-card"><div class="stat-card-label">Projetos</div><div class="stat-card-val">1</div></div>
+            <div class="stat-card"><div class="stat-card-label">Contratos</div><div class="stat-card-val">1</div></div>
+            <div class="stat-card"><div class="stat-card-label">Total Pago</div><div class="stat-card-val" style="font-size:16px">R$ 22.500</div></div>
+            <div class="stat-card"><div class="stat-card-label">Pendente</div><div class="stat-card-val" style="font-size:16px">R$ 22.500</div></div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+            <div class="table-wrap">
+              <div style="padding:14px 16px;border-bottom:1px solid var(--b)">
+                <h4 style="font-size:13px;font-weight:700;color:#FFF">Fintech Pro — Plataforma SaaS</h4>
+                <p style="font-size:10px;color:var(--fd);margin-top:2px">Em Desenvolvimento</p>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
+                  <span style="font-size:10px;color:var(--fd)">Progresso</span>
+                  <span style="font-size:11px;font-weight:800;color:var(--a);font-family:'JetBrains Mono',monospace">35%</span>
+                </div>
+                <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:35%"></div></div>
+              </div>
+              <div style="padding:10px 16px">
+                <div class="milestone"><div class="milestone-dot done"></div><span style="text-decoration:line-through;color:var(--fd);font-size:11px">Planejamento e Discovery</span></div>
+                <div class="milestone"><div class="milestone-dot done"></div><span style="text-decoration:line-through;color:var(--fd);font-size:11px">Design UI/UX</span></div>
+                <div class="milestone"><div class="milestone-dot active"></div><span style="font-size:11px;font-weight:600">Desenvolvimento Backend</span></div>
+                <div class="milestone"><div class="milestone-dot pending"></div><span style="font-size:11px">Desenvolvimento Frontend</span></div>
+                <div class="milestone"><div class="milestone-dot pending"></div><span style="font-size:11px">Testes e QA</span></div>
+                <div class="milestone"><div class="milestone-dot pending"></div><span style="font-size:11px">Deploy e Entrega</span></div>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <div class="table-header"><span>Pagamento</span><span>Valor</span><span>Status</span></div>
+              <div class="table-row"><span style="font-weight:600">Entrada (50%)</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px">R$ 22.500</span><span class="badge badge-green">Pago</span></div>
+              <div class="table-row"><span style="font-weight:600">Saldo Final (50%)</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px">R$ 22.500</span><span class="badge badge-yellow">Pendente</span></div>
+              <div class="table-row"><span style="font-weight:600">Hospedagem (Jul)</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px">R$ 497</span><span class="badge badge-gray">Futuro</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ SCREEN 6: PROJETO TIMELINE ═══════════ -->
+<section class="screen-section" id="screen6">
+  <div class="container">
+    <div class="section-tag">Tela 6</div>
+    <h2 class="section-title">Timeline de Produção</h2>
+    <p class="section-sub">Acompanhamento visual do projeto com milestones, upload de arquivos por etapa e indicador de progresso. Tudo com animações suaves.</p>
+
+    <div class="screen">
+      <div class="screen-header"><div class="screen-dot r"></div><div class="screen-dot y"></div><div class="screen-dot g"></div><span class="screen-title">Unitrix Hub — Projeto — Fintech Pro SaaS</span></div>
+      <div class="screen-body">
+        <div class="screen-sidebar" style="padding-top:16px">
+          <a class="sb-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> <span>Visão Geral</span></a>
+          <a class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg> <span>Arquivos</span></a>
+          <a class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> <span>Histórico</span></a>
+        </div>
+        <div class="screen-main-client">
+          <div class="sm-header">
+            <div>
+              <h2>Fintech Pro — Plataforma SaaS</h2>
+              <p style="font-size:11px;color:var(--fd);margin-top:2px">Início: 01/06/2026 · Previsão: 01/09/2026 · <span style="color:var(--a)">35% concluído</span></p>
+            </div>
+            <div class="progress-bar-wrap" style="width:120px">
+              <div class="progress-bar-fill" style="width:35%"></div>
+            </div>
+          </div>
+
+          <div style="position:relative;padding-left:24px;border-left:2px solid rgba(255,255,255,.06)">
+            <div style="margin-bottom:28px;position:relative">
+              <div style="position:absolute;left:-31px;top:4px;width:14px;height:14px;border-radius:50%;background:var(--a);border:3px solid var(--bg)"></div>
+              <div class="badge badge-green" style="margin-bottom:6px">Concluído</div>
+              <h4 style="font-size:13px;font-weight:700;color:#FFF">Planejamento e Discovery</h4>
+              <p style="font-size:11px;color:var(--fm);margin-top:4px">Definição de escopo, arquitetura e wireframes.</p>
+              <p style="font-size:10px;color:var(--fd);margin-top:4px">Concluído em 15/06/2026</p>
+              <div style="display:flex;gap:6px;margin-top:8px">
+                <span style="font-size:10px;padding:3px 8px;background:rgba(255,255,255,.03);border-radius:4px;color:var(--fm)">📄 briefing.pdf</span>
+                <span style="font-size:10px;padding:3px 8px;background:rgba(255,255,255,.03);border-radius:4px;color:var(--fm)">📐 wireframes.fig</span>
+              </div>
+            </div>
+            <div style="margin-bottom:28px;position:relative">
+              <div style="position:absolute;left:-31px;top:4px;width:14px;height:14px;border-radius:50%;background:var(--a);border:3px solid var(--bg)"></div>
+              <div class="badge badge-green" style="margin-bottom:6px">Concluído</div>
+              <h4 style="font-size:13px;font-weight:700;color:#FFF">Design UI/UX</h4>
+              <p style="font-size:11px;color:var(--fm);margin-top:4px">Prototipação de alta fidelidade de todas as telas.</p>
+              <p style="font-size:10px;color:var(--fd);margin-top:4px">Concluído em 01/07/2026</p>
+              <div style="display:flex;gap:6px;margin-top:8px">
+                <span style="font-size:10px;padding:3px 8px;background:rgba(255,255,255,.03);border-radius:4px;color:var(--fm)">🎨 design-system.sketch</span>
+              </div>
+            </div>
+            <div style="margin-bottom:28px;position:relative">
+              <div style="position:absolute;left:-33px;top:4px;width:18px;height:18px;border-radius:50%;background:var(--a);border:3px solid var(--bg);box-shadow:0 0 12px rgba(184,255,46,.3);animation:pulse-dot 2s ease-in-out infinite"></div>
+              <div class="badge badge-yellow" style="margin-bottom:6px">Em Andamento</div>
+              <h4 style="font-size:13px;font-weight:700;color:#FFF">Desenvolvimento Backend</h4>
+              <p style="font-size:11px;color:var(--fm);margin-top:4px">API, banco de dados PostgreSQL, autenticação e integrações bancárias.</p>
+              <p style="font-size:10px;color:var(--fd);margin-top:4px">Previsão: 20/07/2026</p>
+            </div>
+            <div style="margin-bottom:28px;position:relative;opacity:.5">
+              <div style="position:absolute;left:-31px;top:4px;width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,.08);border:3px solid var(--bg)"></div>
+              <div class="badge badge-gray" style="margin-bottom:6px">Pendente</div>
+              <h4 style="font-size:13px;font-weight:700;color:var(--fd)">Desenvolvimento Frontend</h4>
+              <p style="font-size:11px;color:var(--fd);margin-top:4px">Implementação do dashboard e interface do cliente.</p>
+              <p style="font-size:10px;color:var(--fd);margin-top:4px">Previsão: 10/08/2026</p>
+            </div>
+            <div style="margin-bottom:28px;position:relative;opacity:.5">
+              <div style="position:absolute;left:-31px;top:4px;width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,.08);border:3px solid var(--bg)"></div>
+              <div class="badge badge-gray" style="margin-bottom:6px">Pendente</div>
+              <h4 style="font-size:13px;font-weight:700;color:var(--fd)">Testes e QA</h4>
+              <p style="font-size:11px;color:var(--fd);margin-top:4px">Testes automatizados e revisão de qualidade.</p>
+              <p style="font-size:10px;color:var(--fd);margin-top:4px">Previsão: 25/08/2026</p>
+            </div>
+            <div style="position:relative;opacity:.5">
+              <div style="position:absolute;left:-31px;top:4px;width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,.08);border:3px solid var(--bg)"></div>
+              <div class="badge badge-gray" style="margin-bottom:6px">Pendente</div>
+              <h4 style="font-size:13px;font-weight:700;color:var(--fd)">Deploy e Entrega</h4>
+              <p style="font-size:11px;color:var(--fd);margin-top:4px">Publicação em produção, documentação e entrega oficial.</p>
+              <p style="font-size:10px;color:var(--fd);margin-top:4px">Previsão: 01/09/2026</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ CTA ═══════════ -->
+<section style="text-align:center;padding:100px 0;position:relative;z-index:1">
+  <div class="container">
+    <h2 class="section-title" style="margin-bottom:16px">Este é o Unitrix Hub</h2>
+    <p class="section-sub" style="max-width:500px;margin:0 auto 28px">Uma plataforma completa de relacionamento comercial. Apresentações, contratos, pagamentos e projetos — tudo em um só lugar.</p>
+    <a href="https://wa.me/5511999999999" target="_blank" class="btn btn-primary">Quero o Unitrix Hub →</a>
+  </div>
+</section>
+
+<footer style="border-top:1px solid var(--b);padding:28px 0;font-size:11px;color:var(--fd);text-align:center;letter-spacing:.1em;position:relative;z-index:1">
+  <div class="container">Unitrix Hub &copy; 2026 — unitrix.app</div>
+</footer>
+
+<script>
+let currentScreen = 0;
+const totalScreens = 7;
+
+function goScreen(n) {
+  currentScreen = Math.max(0, Math.min(totalScreens - 1, n));
+  document.getElementById('screen' + currentScreen).scrollIntoView({ behavior: 'smooth' });
+  updateDots();
+}
+
+function nextScreen() { goScreen(currentScreen + 1); }
+function prevScreen() { goScreen(currentScreen - 1); }
+
+function updateDots() {
+  document.querySelectorAll('.tour-dot').forEach((d, i) => {
+    d.classList.toggle('active', i === currentScreen);
+  });
+}
+
+// Keyboard nav
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') nextScreen();
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') prevScreen();
+});
+
+// Scroll spy
+const sections = document.querySelectorAll('.screen-section');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const id = entry.target.id.replace('screen', '');
+      currentScreen = parseInt(id);
+      updateDots();
+    }
+  });
+}, { threshold: 0.5 });
+
+sections.forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>

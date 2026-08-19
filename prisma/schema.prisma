@@ -1,0 +1,191 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String?
+  role         String   @default("ADMIN")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  clients       Client[]
+  presentations Presentation[]
+  contracts     Contract[]
+  plans         Plan[]
+}
+
+model Client {
+  id           String   @id @default(cuid())
+  name         String
+  company      String?
+  document     String?
+  email        String   @unique
+  phone        String?
+  address      String?
+  city         String?
+  segment      String?
+  projectType  String?
+  budget       Decimal? @db.Decimal(10, 2)
+  status       String   @default("LEAD")
+  passwordHash String?
+  briefing     Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+
+  presentations Presentation[]
+  contracts     Contract[]
+  projects      Project[]
+  notifications Notification[]
+  subscriptions Subscription[]
+  payments      Payment[]
+}
+
+model Presentation {
+  id        String    @id @default(cuid())
+  title     String
+  slug      String    @unique
+  content   Json?
+  status    String    @default("DRAFT")
+  sentAt    DateTime?
+  viewedAt  DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  clientId    String
+  client      Client @relation(fields: [clientId], references: [id])
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+}
+
+model Contract {
+  id               String    @id @default(cuid())
+  title            String
+  slug             String    @unique
+  scope            String
+  deadline         DateTime
+  value            Decimal   @db.Decimal(10, 2)
+  conditions       String?
+  status           String    @default("DRAFT")
+  clientName       String
+  clientDocument   String?
+  clientCompany    String?
+  projectType      String?
+  startDate        DateTime?
+  endDate          DateTime?
+  readConfirmed    Boolean   @default(false)
+  readConfirmedAt  DateTime?
+  signatureData    String?
+  signatureIp      String?
+  signatureBrowser String?
+  signedAt         DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  clientId    String
+  client      Client @relation(fields: [clientId], references: [id])
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+}
+
+model Payment {
+  id          String    @id @default(cuid())
+  description String
+  amount      Decimal   @db.Decimal(10, 2)
+  type        String    @default("DEPOSIT")
+  status      String    @default("PENDING")
+  dueDate     DateTime?
+  paidAt      DateTime?
+  method      String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id])
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id])
+}
+
+model Project {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  progress    Int       @default(0)
+  status      String    @default("PLANNING")
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  clientId   String
+  client     Client             @relation(fields: [clientId], references: [id])
+  milestones ProjectMilestone[]
+  payments   Payment[]
+}
+
+model ProjectMilestone {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  status      String    @default("PENDING")
+  order       Int
+  dueDate     DateTime?
+  completedAt DateTime?
+  files       Json?
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id])
+}
+
+model Plan {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  price       Decimal  @db.Decimal(10, 2)
+  interval    String   @default("MONTHLY")
+  features    Json?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdById   String
+  createdBy     User           @relation(fields: [createdById], references: [id])
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id          String    @id @default(cuid())
+  status      String    @default("ACTIVE")
+  startedAt   DateTime  @default(now())
+  canceledAt  DateTime?
+  nextBilling DateTime?
+
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id])
+  planId   String
+  plan     Plan   @relation(fields: [planId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  title     String
+  message   String
+  type      String   @default("INFO")
+  read      Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id])
+}

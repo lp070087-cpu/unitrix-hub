@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unitrix — Desenvolvimento Premium Sob Demanda</title>
+<meta name="description" content="Transformamos briefings em produtos digitais de alto padrão.">
+<style>
+  :root {
+    --bg: #08080A; --surface: #0E0E11; --surface-h: #141418;
+    --border: rgba(255,255,255,0.06); --border-s: rgba(255,255,255,0.12);
+    --fg: #E8E8E8; --fg-m: #888; --fg-d: #555;
+    --accent: #B8FF2E; --accent-h: #A3EE1A; --accent-g: rgba(184,255,46,0.10);
+    color-scheme: dark;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;overflow-x:hidden}
+  body{
+    background:var(--bg);color:var(--fg);
+    font-family:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.6;overflow-x:hidden;
+  }
+
+  /* ambient */
+  .ambient-grid{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:0.015;
+    background-image:repeating-linear-gradient(60deg,var(--accent)0px,var(--accent)1px,transparent 1px,transparent 32px),
+    repeating-linear-gradient(-60deg,var(--accent)0px,var(--accent)1px,transparent 1px,transparent 32px)}
+  .blob{position:fixed;border-radius:50%;pointer-events:none;z-index:0;filter:blur(140px)}
+  .blob-1{width:400px;height:400px;background:var(--accent);opacity:0.03;top:-100px;left:-100px;animation:blob1 20s ease-in-out infinite}
+  .blob-2{width:300px;height:300px;background:var(--accent);opacity:0.03;bottom:-100px;right:-80px;animation:blob2 24s ease-in-out infinite}
+  .blob-3{width:250px;height:250px;background:var(--accent);opacity:0.03;top:50%;left:55%;animation:blob3 18s ease-in-out infinite}
+  @keyframes blob1{0%,100%{transform:translate(0,0) scale(1)}25%{transform:translate(70px,50px) scale(1.12)}50%{transform:translate(30px,-20px) scale(0.88)}75%{transform:translate(-20px,30px) scale(1.06)}}
+  @keyframes blob2{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(-50px,-30px) scale(1.1)}66%{transform:translate(20px,15px) scale(0.85)}}
+  @keyframes blob3{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-40px,-25px) scale(1.15)}}
+
+  /* ═══════════ SPLASH ═══════════ */
+  .splash{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;pointer-events:none;transition:opacity .25s,visibility .25s}
+  .splash.hidden{opacity:0;visibility:hidden}
+  .splash-glow{position:absolute;width:360px;height:360px;border-radius:50%;background:radial-gradient(circle,rgba(184,255,46,0.12)0%,transparent 70%);animation:splashPulse 2s ease-in-out infinite}
+  @keyframes splashPulse{0%,100%{opacity:0.4;transform:scale(0.9)}50%{opacity:1;transform:scale(1.1)}}
+  .splash-content{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:22px}
+  .splash-wordmark{font-size:clamp(34px,5vw,52px);font-weight:900;letter-spacing:-0.03em;color:#FFF}
+  .splash-wordmark span{color:var(--accent)}
+  .splash-tag{font-size:10px;font-weight:700;letter-spacing:.4em;color:var(--fg-d);text-transform:uppercase}
+  .splash-line{width:52px;height:1px;background:var(--accent);opacity:.35;margin:4px 0}
+  .splash-particle{position:absolute;border-radius:50%;background:var(--accent);pointer-events:none;animation:particleUp 4s ease-in-out infinite}
+  @keyframes particleUp{0%{opacity:0;transform:translateY(0)translateX(0)}25%{opacity:.7}75%{opacity:.7}100%{opacity:0;transform:translateY(-100px)translateX(25px)}}
+  .splash-hint{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;opacity:.5;animation:hintBounce 2s ease-in-out infinite}
+  @keyframes hintBounce{0%,100%{transform:translateX(-50%)translateY(0)}50%{transform:translateX(-50%)translateY(8px)}}
+  .splash-hint span{font-size:9px;font-weight:700;letter-spacing:.25em;color:var(--fg-d);text-transform:uppercase}
+  .splash-hint-arrow{width:18px;height:18px;border-right:1.5px solid var(--fg-d);border-bottom:1.5px solid var(--fg-d);transform:rotate(45deg)}
+
+  /* ═══════════ NAV ═══════════ */
+  nav{position:fixed;top:0;left:0;right:0;z-index:50;background:rgba(8,8,10,.85);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);opacity:0;transition:opacity .4s}
+  nav.visible{opacity:1}
+  .nav-inner{display:flex;align-items:center;justify-content:space-between;padding:14px 32px;max-width:1200px;margin:0 auto}
+  .nav-logo{display:flex;align-items:center;gap:8px;font-weight:900;font-size:15px;letter-spacing:-0.01em;color:#FFF;text-decoration:none}
+  .nav-logo svg{width:20px;height:20px}
+  .nav-links{display:flex;gap:28px;list-style:none}
+  .nav-links a{color:var(--fg-m);text-decoration:none;font-size:13px;font-weight:500;transition:color .2s}
+  .nav-links a:hover,.nav-links a.active{color:var(--accent)}
+  .nav-cta{font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--accent);text-transform:uppercase;text-decoration:none;padding:8px 18px;border:1px solid rgba(184,255,46,.2);border-radius:4px;transition:all .2s}
+  .nav-cta:hover{border-color:var(--accent);background:rgba(184,255,46,.05)}
+
+  /* ═══════════ UTILS ═══════════ */
+  .container{max-width:1100px;margin:0 auto;padding:0 32px;position:relative;z-index:1}
+  section{padding:100px 0;position:relative;z-index:1}
+  .section-tag{display:inline-flex;align-items:center;gap:10px;font-size:11px;font-weight:700;letter-spacing:.35em;color:var(--accent);text-transform:uppercase;margin-bottom:16px}
+  .section-tag::before{content:'';width:20px;height:1px;background:var(--accent);opacity:.5}
+  .section-title{font-size:clamp(30px,3.8vw,46px);font-weight:900;letter-spacing:-0.03em;color:#FFF;line-height:1.1}
+  .section-sub{font-size:16px;color:var(--fg-m);max-width:520px;margin-top:12px;line-height:1.6}
+  .divider{width:48px;height:1px;background:var(--accent);opacity:.3;margin:28px 0 40px}
+  .btn{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;padding:16px 32px;cursor:pointer;transition:all .25s ease;border-radius:4px}
+  .btn-primary{background:var(--accent);color:var(--bg);animation:pulseBtn 2.6s ease-out infinite}
+  .btn-primary:hover{background:var(--accent-h);transform:translateY(-2px);box-shadow:0 10px 36px rgba(184,255,46,.3)}
+  @keyframes pulseBtn{0%{box-shadow:0 0 0 0 rgba(184,255,46,.2)}70%{box-shadow:0 0 0 14px rgba(184,255,46,0)}100%{box-shadow:0 0 0 0 rgba(184,255,46,0)}}
+  .btn-ghost{color:var(--accent);border:1px solid rgba(184,255,46,.2);background:transparent}
+  .btn-ghost:hover{border-color:var(--accent);background:rgba(184,255,46,.05);transform:translateY(-2px)}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+  .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:28px;transition:all .35s ease}
+  .card:hover{background:var(--surface-h);border-color:var(--border-s);transform:translateY(-6px);box-shadow:0 12px 40px rgba(0,0,0,.5),0 0 60px rgba(184,255,46,.02)}
+  .card-icon{width:48px;height:48px;border-radius:10px;background:var(--accent-g);display:flex;align-items:center;justify-content:center;margin-bottom:16px;color:var(--accent)}
+  .card-title{font-size:15px;font-weight:700;color:#FFF;margin-bottom:6px}
+  .card-desc{font-size:13px;color:var(--fg-m);line-height:1.5}
+
+  /* ═══════════ HERO ═══════════ */
+  .hero{min-height:100vh;display:flex;align-items:center}
+  .hero-grid{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center}
+  .hero-badge{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.35em;color:var(--accent);text-transform:uppercase;margin-bottom:20px}
+  .hero-badge::before{content:'';width:16px;height:1px;background:var(--accent);opacity:.5}
+  .hero-title{font-size:clamp(44px,5.5vw,76px);font-weight:900;letter-spacing:-0.04em;line-height:.9;color:#FFF}
+  .hero-title span{color:var(--accent)}
+  .hero-desc{font-size:17px;color:var(--fg-m);max-width:420px;line-height:1.6;margin:24px 0 32px}
+  .hero-actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .hero-visual{position:relative;display:flex;align-items:center;justify-content:center}
+  .hero-glow-circle{position:absolute;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(184,255,46,.10)0%,transparent 70%);animation:heroPulse 4s ease-in-out infinite}
+  @keyframes heroPulse{0%,100%{opacity:.4;transform:scale(1)}50%{opacity:.9;transform:scale(1.08)}}
+  .hero-icon-wrap{position:relative;z-index:1;animation:heroFloat 6s ease-in-out infinite;display:flex;flex-direction:column;align-items:center;gap:14px}
+  @keyframes heroFloat{0%,100%{transform:translateY(0)rotate(-1deg)}50%{transform:translateY(-12px)rotate(1deg)}}
+
+  /* ═══════════ PROCESS ═══════════ */
+  .process-section{background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+  .step{display:flex;gap:16px;padding:10px 0}
+  .step-num{min-width:44px;font-size:36px;font-weight:900;color:var(--accent);line-height:.8}
+  .step-content{padding-top:4px}
+  .step-title{font-size:14px;font-weight:700;color:#FFF;margin-bottom:4px}
+  .step-desc{font-size:13px;color:var(--fg-m);line-height:1.5}
+
+  /* ═══════════ INFO BOX ═══════════ */
+  .info-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:28px}
+  .info-box h4{font-size:14px;font-weight:700;color:#FFF;margin-bottom:8px}
+  .info-box p{font-size:13px;color:var(--fg-m);line-height:1.6}
+  .info-highlight{color:var(--accent);font-weight:700}
+
+  /* ═══════════ GLOWBOX ═══════════ */
+  .glowbox{isolation:isolate;overflow:hidden;border-radius:6px;position:relative;display:inline-block}
+  .glowbox-inner{position:relative;z-index:2}
+  .glowbox-anim{left:50%;position:absolute;top:50%;transform:translate(-50%,-50%);width:120%;z-index:0;opacity:.5;transition:opacity .3s}
+  .glowbox-anim::before{content:"";float:left;padding-top:100%}
+  .glowbox-anim *{height:100%;left:0;position:absolute;top:0;width:100%}
+  .glowbox-bg{animation:glowSpin 3s infinite linear;background-image:conic-gradient(from 0 at 50% 50%,var(--accent)0deg,rgba(184,255,46,0)50deg,rgba(184,255,46,0)310deg,var(--accent)360deg);background-size:cover}
+  .glowbox-glow{animation:glowSpin 3s infinite linear;background-image:conic-gradient(from 0 at 50% 50%,var(--accent)0deg,rgba(184,255,46,0)50deg,rgba(184,255,46,0)310deg,var(--accent)360deg);filter:blur(12px);opacity:.12;background-size:cover}
+  @keyframes glowSpin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+  .glowbox:hover .glowbox-anim{opacity:.9}
+
+  /* ═══════════ FAQ ═══════════ */
+  .faq-item{border-bottom:1px solid var(--border)}
+  .faq-q{width:100%;text-align:left;background:none;border:none;color:#FFF;font-size:15px;font-weight:600;padding:20px 0;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:16px;transition:color .2s;font-family:inherit}
+  .faq-q:hover{color:var(--accent)}
+  .faq-a{max-height:0;overflow:hidden;transition:max-height .4s ease,padding .4s ease;font-size:14px;color:var(--fg-m);line-height:1.6}
+  .faq-item.open .faq-a{max-height:260px;padding-bottom:20px}
+  .faq-icon{font-size:20px;transition:transform .3s ease;color:var(--fg-d);flex-shrink:0}
+  .faq-item.open .faq-icon{transform:rotate(45deg);color:var(--accent)}
+
+  /* ═══════════ CTA ═══════════ */
+  .cta-section{text-align:center;padding:120px 0;position:relative;z-index:1}
+  .cta-glow{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(184,255,46,.06)0%,transparent 70%);pointer-events:none;z-index:0;animation:heroPulse 4s ease-in-out infinite}
+  .cta-title{font-size:clamp(32px,4vw,48px);font-weight:900;letter-spacing:-0.03em;color:#FFF;position:relative;z-index:1}
+  .cta-sub{font-size:17px;color:var(--fg-m);max-width:500px;margin:16px auto 32px;position:relative;z-index:1}
+
+  footer{border-top:1px solid var(--border);padding:32px 0;font-size:12px;color:var(--fg-d);text-align:center;letter-spacing:.1em;position:relative;z-index:1}
+
+  /* ═══════════ REVEAL ═══════════ */
+  .reveal{opacity:0;transform:translateY(24px);transition:opacity .45s ease,transform .45s ease}
+  .reveal.visible{opacity:1;transform:translateY(0)}
+  .reveal-l{opacity:0;transform:translateX(-24px);transition:opacity .45s ease,transform .45s ease}
+  .reveal-l.visible{opacity:1;transform:translateX(0)}
+  .reveal-r{opacity:0;transform:translateX(24px);transition:opacity .45s ease,transform .45s ease}
+  .reveal-r.visible{opacity:1;transform:translateX(0)}
+  .reveal-scale{opacity:0;transform:scale(.95);transition:opacity .4s ease,transform .4s ease}
+  .reveal-scale.visible{opacity:1;transform:scale(1)}
+
+  @media(max-width:768px){
+    section{padding:60px 0}
+    .container{padding:0 20px}
+    .hero-grid,.grid-2,.grid-3,.grid-4{grid-template-columns:1fr;gap:16px}
+    .hero-grid{gap:40px}
+    .hero-visual{display:none}
+    .hero-title{font-size:38px}
+    .nav-links{display:none}
+  }
+  @media(prefers-reduced-motion:reduce){
+    .blob,.hero-glow-circle,.hero-icon-wrap,.glowbox-anim,.cta-glow,.splash-glow,.splash-particle,.splash-hint{animation:none!important}
+    .reveal,.reveal-l,.reveal-r,.reveal-scale{opacity:1;transform:none;transition:none}
+  }
+</style>
+</head>
+<body>
+
+<div class="ambient-grid"></div>
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+<div class="blob blob-3"></div>
+
+<!-- ═══════════ SPLASH ═══════════ -->
+<div class="splash" id="splash">
+  <div class="splash-glow"></div>
+  <div class="splash-particle" style="top:22%;left:14%;width:4px;height:4px;animation-delay:0s"></div>
+  <div class="splash-particle" style="top:18%;right:18%;width:3px;height:3px;animation-delay:.6s"></div>
+  <div class="splash-particle" style="bottom:28%;left:22%;width:5px;height:5px;animation-delay:1.2s"></div>
+  <div class="splash-particle" style="bottom:22%;right:16%;width:3px;height:3px;animation-delay:.3s"></div>
+  <div class="splash-particle" style="top:38%;left:8%;width:2px;height:2px;animation-delay:.9s"></div>
+  <div class="splash-particle" style="top:32%;right:10%;width:4px;height:4px;animation-delay:1.5s"></div>
+  <div class="splash-content">
+    <svg viewBox="0 0 200 200" style="width:90px;height:90px">
+      <circle cx="100" cy="100" r="92" fill="none" stroke="rgba(184,255,46,0.08)" stroke-width="2"/>
+      <circle cx="100" cy="100" r="68" fill="none" stroke="rgba(184,255,46,0.25)" stroke-width="1"/>
+      <line x1="32" y1="100" x2="168" y2="100" stroke="#B8FF2E" stroke-width="3" stroke-linecap="round"/>
+      <line x1="46.5" y1="150" x2="153.5" y2="50" stroke="#B8FF2E" stroke-width="3" stroke-linecap="round"/>
+      <line x1="46.5" y1="50" x2="153.5" y2="150" stroke="#B8FF2E" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="100" cy="100" r="7" fill="#B8FF2E"/>
+    </svg>
+    <div class="splash-wordmark">Unitri<span>x</span></div>
+    <div class="splash-line"></div>
+    <div class="splash-tag">Apresentação Comercial</div>
+  </div>
+  <div class="splash-hint">
+    <span>Role para baixo</span>
+    <div class="splash-hint-arrow"></div>
+  </div>
+</div>
+
+<!-- ═══════════ NAV ═══════════ -->
+<nav id="navbar">
+  <div class="nav-inner">
+    <a href="#" class="nav-logo">
+      <svg viewBox="0 0 200 200"><line x1="32" y1="100" x2="168" y2="100" stroke="#B8FF2E" stroke-width="5" stroke-linecap="round"/><line x1="46.5" y1="150" x2="153.5" y2="50" stroke="#B8FF2E" stroke-width="5" stroke-linecap="round"/><line x1="46.5" y1="50" x2="153.5" y2="150" stroke="#B8FF2E" stroke-width="5" stroke-linecap="round"/><circle cx="100" cy="100" r="9" fill="#B8FF2E"/></svg>
+      Unitri<span style="color:var(--accent)">x</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#servicos" class="active">Serviços</a></li>
+      <li><a href="#processo">Processo</a></li>
+      <li><a href="#stack">Stack</a></li>
+      <li><a href="#politica">Política</a></li>
+      <li><a href="#faq">FAQ</a></li>
+    </ul>
+    <a href="#cta" class="nav-cta">Falar com a Unitrix</a>
+  </div>
+</nav>
+
+<!-- ═══════════ HERO ═══════════ -->
+<section class="hero" id="hero">
+  <div class="container hero-grid">
+    <div>
+      <div class="hero-badge">Estúdio de Desenvolvimento Premium</div>
+      <h1 class="hero-title">Seu projeto digital com <span>excelência</span> de ponta a ponta</h1>
+      <p class="hero-desc">Transformamos briefings em produtos digitais de alto padrão. Landing pages, sistemas web, SaaS, aplicativos mobile e IA personalizada — tudo com o selo Unitrix de qualidade.</p>
+      <div class="hero-actions">
+        <a href="#cta" class="btn btn-primary">Solicitar Apresentação →</a>
+        <a href="#servicos" class="btn btn-ghost">Ver Serviços</a>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="hero-glow-circle"></div>
+      <div class="hero-icon-wrap">
+        <svg viewBox="0 0 200 200" style="width:240px;height:240px">
+          <circle cx="100" cy="100" r="92" fill="none" stroke="rgba(184,255,46,0.06)" stroke-width="2"/>
+          <circle cx="100" cy="100" r="68" fill="none" stroke="rgba(184,255,46,0.2)" stroke-width="1"/>
+          <polygon points="100,18 148,46 148,102 100,130 52,102 52,46" fill="none" stroke="rgba(184,255,46,0.06)" stroke-width="1"/>
+          <line x1="32" y1="100" x2="168" y2="100" stroke="#B8FF2E" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="46.5" y1="150" x2="153.5" y2="50" stroke="#B8FF2E" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="46.5" y1="50" x2="153.5" y2="150" stroke="#B8FF2E" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="100" cy="100" r="7" fill="#B8FF2E"/>
+        </svg>
+        <div style="text-align:center;font-weight:900;font-size:18px;letter-spacing:-0.02em;color:#FFF">Unitri<span style="color:var(--accent)">x</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ SERVIÇOS ═══════════ -->
+<section id="servicos">
+  <div class="container">
+    <div class="section-tag reveal">Serviços</div>
+    <h2 class="section-title reveal">O que criamos</h2>
+    <p class="section-sub reveal">Projetos sob demanda com a stack mais moderna do mercado. Do design à entrega, tudo com um único padrão de excelência.</p>
+    <div class="divider reveal"></div>
+    <div class="grid-3" style="margin-top:20px">
+      <div class="card reveal"><div class="card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div><h3 class="card-title">Landing Pages</h3><p class="card-desc">Páginas de alta conversão com animações premium, copywriting estratégico e performance impecável.</p></div>
+      <div class="card reveal"><div class="card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg></div><h3 class="card-title">Sites Institucionais</h3><p class="card-desc">Sites multi-páginas com design exclusivo, blog integrado, SEO e painel de gestão de conteúdo.</p></div>
+      <div class="card reveal"><div class="card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div><h3 class="card-title">Sistemas Web</h3><p class="card-desc">Aplicações completas com autenticação, banco de dados, dashboards e integrações API.</p></div>
+      <div class="card reveal"><div class="card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg></div><h3 class="card-title">SaaS</h3><p class="card-desc">Plataformas multi-tenant com pagamentos integrados, autenticação avançada e infra escalável.</p></div>
+      <div class="card reveal"><div class="card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></div><h3 class="card-title">Apps Mobile</h3><p class="card-desc">Aplicativos iOS e Android com React Native ou Flutter, integrados com backends robustos.</p></div>
+      <div class="card reveal"><div class="card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><h3 class="card-title">IA Personalizada</h3><p class="card-desc">Chatbots, automação, análise de dados, recomendação e processamento de linguagem natural.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ PROCESSO ═══════════ -->
+<section class="process-section" id="processo">
+  <div class="container">
+    <div class="section-tag reveal">Processo</div>
+    <h2 class="section-title reveal">Do briefing à entrega</h2>
+    <p class="section-sub reveal">Um fluxo transparente, profissional e com contrato. Você acompanha cada etapa no Unitrix Hub.</p>
+    <div class="divider reveal" style="background:rgba(184,255,46,.12)"></div>
+    <div class="grid-2" style="margin-top:20px;gap:14px 28px">
+      <div class="step reveal-l"><span class="step-num">01</span><div class="step-content"><h3 class="step-title">Briefing Detalhado</h3><p class="step-desc">Você preenche um formulário completo: nicho, público, referências, funcionalidades e expectativas.</p></div></div>
+      <div class="step reveal-r"><span class="step-num">02</span><div class="step-content"><h3 class="step-title">Apresentação Comercial</h3><p class="step-desc">Criamos uma apresentação exclusiva em formato website com escopo, funcionalidades, cronograma e tudo que será entregue.</p></div></div>
+      <div class="step reveal-l"><span class="step-num">03</span><div class="step-content"><h3 class="step-title">Contrato + Confirmação</h3><p class="step-desc">Após aprovar a apresentação, geramos o contrato. Você confirma a leitura marcando que leu e concorda com todos os termos, e assina digitalmente.</p></div></div>
+      <div class="step reveal-r"><span class="step-num">04</span><div class="step-content"><h3 class="step-title">Entrada + Desenvolvimento</h3><p class="step-desc">Pagamento de 50% e início imediato. Timeline: Planejamento → Design → Desenvolvimento → Testes → Entrega.</p></div></div>
+      <div class="step reveal-l"><span class="step-num">05</span><div class="step-content"><h3 class="step-title">Saldo Final + Entrega</h3><p class="step-desc">Projeto concluído. Pagamento dos 50% restantes. Liberação dos arquivos, código-fonte e acesso administrativo.</p></div></div>
+      <div class="step reveal-r"><span class="step-num">06</span><div class="step-content"><h3 class="step-title">Assinatura Mensal</h3><p class="step-desc">Hospedagem, SSL, backup, monitoramento e suporte contínuo. Plano recorrente para manter seu projeto no ar.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ STACK ═══════════ -->
+<section id="stack">
+  <div class="container">
+    <div class="section-tag reveal">Tecnologia</div>
+    <h2 class="section-title reveal">Stack de desenvolvimento</h2>
+    <p class="section-sub reveal">Tecnologias de ponta para performance, escalabilidade e manutenibilidade.</p>
+    <div class="divider reveal"></div>
+    <div class="grid-4" style="margin-top:20px">
+      <div class="card reveal-scale" style="text-align:center;padding:24px 12px"><div style="font-size:26px;font-weight:900;color:var(--accent);margin-bottom:6px">N</div><h4 style="font-size:13px;font-weight:700;color:#FFF">Next.js 15</h4><p style="font-size:11px;color:var(--fg-m);margin-top:4px">App Router, RSC</p></div>
+      <div class="card reveal-scale" style="text-align:center;padding:24px 12px"><div style="font-size:26px;font-weight:900;color:var(--accent);margin-bottom:6px">T</div><h4 style="font-size:13px;font-weight:700;color:#FFF">TypeScript</h4><p style="font-size:11px;color:var(--fg-m);margin-top:4px">Tipagem estrita</p></div>
+      <div class="card reveal-scale" style="text-align:center;padding:24px 12px"><div style="font-size:26px;font-weight:900;color:var(--accent);margin-bottom:6px">⚡</div><h4 style="font-size:13px;font-weight:700;color:#FFF">Neon + Prisma</h4><p style="font-size:11px;color:var(--fg-m);margin-top:4px">PostgreSQL</p></div>
+      <div class="card reveal-scale" style="text-align:center;padding:24px 12px"><div style="font-size:26px;font-weight:900;color:var(--accent);margin-bottom:6px">▲</div><h4 style="font-size:13px;font-weight:700;color:#FFF">Vercel</h4><p style="font-size:11px;color:var(--fg-m);margin-top:4px">Deploy + Edge</p></div>
+      <div class="card reveal-scale" style="text-align:center;padding:24px 12px"><div style="font-size:26px;font-weight:900;color:var(--accent);margin-bottom:6px">🎨</div><h4 style="font-size:13px;font-weight:700;color:#FFF">Tailwind + Shadcn</h4><p style="font-size:11px;color:var(--fg-m);margin-top:4px">Design system</p></div>
+      <div class="card reveal-scale" style="text-align:center;padding:24px 12px"><div style="font-size:26px;font-weight:900;color:var(--accent);margin-bottom:6px">✦</div><h4 style="font-size:13px;font-weight:700;color:#FFF">Framer Motion</h4><p style="font-size:11px;color:var(--fg-m);margin-top:4px">Animações</p></div>
+      <div class="card reveal-scale" style="text-align:center;padding:24px 12px"><div style="font-size:26px;font-weight:900;color:var(--accent);margin-bottom:6px">💳</div><h4 style="font-size:13px;font-weight:700;color:#FFF">Stripe + PIX</h4><p style="font-size:11px;color:var(--fg-m);margin-top:4px">Pagamentos</p></div>
+      <div class="card reveal-scale" style="text-align:center;padding:24px 12px"><div style="font-size:26px;font-weight:900;color:var(--accent);margin-bottom:6px">🔐</div><h4 style="font-size:13px;font-weight:700;color:#FFF">NextAuth v5</h4><p style="font-size:11px;color:var(--fg-m);margin-top:4px">Autenticação</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ POLÍTICA ═══════════ -->
+<section id="politica">
+  <div class="container">
+    <div class="section-tag reveal">Informações Importantes</div>
+    <h2 class="section-title reveal">Prazos, Valores e Política</h2>
+    <p class="section-sub reveal">Transparência total sobre como trabalhamos e condições contratuais.</p>
+    <div class="divider reveal"></div>
+    <div class="grid-2" style="margin-top:20px">
+      <div class="info-box reveal-l"><h4>⏱ Prazo de Entrega</h4><p>O prazo é de <span class="info-highlight">no mínimo 15 dias</span> e <span class="info-highlight">no máximo 45 dias</span> após a assinatura do contrato e pagamento da entrada. O prazo exato é definido no contrato conforme a complexidade do projeto.</p></div>
+      <div class="info-box reveal-r"><h4>💰 Investimento Mínimo</h4><p>O valor mínimo para qualquer projeto é de <span class="info-highlight">R$ 5.000,00</span>. Projetos maiores têm valores proporcionais ao escopo. O orçamento final é apresentado na proposta antes de qualquer compromisso.</p></div>
+      <div class="info-box reveal-l"><h4>🖥 Hospedagem + Suporte 24h</h4><p>Cobramos um plano mensal para manter seu projeto no ar com <span class="info-highlight">suporte 24 horas</span>. Valor mínimo de <span class="info-highlight">R$ 397,00/mês</span>, variando conforme a complexidade. Inclui: servidor gerenciado, SSL, backup diário e monitoramento 24/7.</p></div>
+      <div class="info-box reveal-r"><h4>📋 Cancelamento</h4><p>Após assinar e pagar, você tem <span class="info-highlight">3 dias corridos</span> para cancelar com reembolso de <span class="info-highlight">80%</span> (20% cobrem custos de preparação, briefing e apresentação). Após 3 dias, reembolso de <span class="info-highlight">apenas 40%</span>, pois você já aprovou a apresentação e confirmou leitura e concordância com os termos.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ FAQ ═══════════ -->
+<section id="faq">
+  <div class="container" style="max-width:700px">
+    <div class="section-tag reveal">FAQ</div>
+    <h2 class="section-title reveal">Dúvidas frequentes</h2>
+    <p class="section-sub reveal" style="max-width:100%">Respostas diretas sobre como trabalhamos.</p>
+    <div class="divider reveal" style="margin-bottom:40px;transition-delay:.1s"></div>
+    <div class="faq-item open reveal"><button class="faq-q" onclick="this.parentElement.classList.toggle('open')">Como funciona o pagamento?<span class="faq-icon">+</span></button><div class="faq-a">50% de entrada para iniciar e 50% na entrega final. Trabalhamos com PIX, transferência bancária e cartão de crédito via Stripe.</div></div>
+    <div class="faq-item reveal"><button class="faq-q" onclick="this.parentElement.classList.toggle('open')">Qual o prazo médio?<span class="faq-icon">+</span></button><div class="faq-a">De 15 a 45 dias após contrato e entrada. O prazo exato está na proposta e no contrato.</div></div>
+    <div class="faq-item reveal"><button class="faq-q" onclick="this.parentElement.classList.toggle('open')">Como funciona o cancelamento?<span class="faq-icon">+</span></button><div class="faq-a">Até 3 dias: 80% de reembolso. Após 3 dias: 40%, pois você já aprovou a apresentação e confirmou leitura dos termos.</div></div>
+    <div class="faq-item reveal"><button class="faq-q" onclick="this.parentElement.classList.toggle('open')">Quanto custa a hospedagem?<span class="faq-icon">+</span></button><div class="faq-a">Plano de hospedagem + suporte 24h a partir de R$ 397,00/mês. Inclui servidor, SSL, backup, monitoramento e suporte técnico.</div></div>
+    <div class="faq-item reveal"><button class="faq-q" onclick="this.parentElement.classList.toggle('open')">Como acompanho o progresso?<span class="faq-icon">+</span></button><div class="faq-a">Você recebe acesso ao Unitrix Hub com timeline de produção e notificações de cada etapa concluída.</div></div>
+    <div class="faq-item reveal"><button class="faq-q" onclick="this.parentElement.classList.toggle('open')">O contrato tem validade jurídica?<span class="faq-icon">+</span></button><div class="faq-a">Sim. Assinatura digital com registro de data, hora, IP e navegador. Você confirma que leu e concorda antes de assinar.</div></div>
+  </div>
+</section>
+
+<!-- ═══════════ CTA ═══════════ -->
+<section class="cta-section" id="cta">
+  <div class="cta-glow"></div>
+  <div class="container" style="position:relative;z-index:1">
+    <h2 class="cta-title reveal">Vamos criar algo extraordinário?</h2>
+    <p class="cta-sub reveal">Conte sobre seu projeto. Em até 48h você recebe uma apresentação comercial exclusiva em formato website — sem compromisso.</p>
+    <div class="glowbox reveal-scale">
+      <div class="glowbox-anim"><div class="glowbox-glow"></div><div class="glowbox-bg"></div></div>
+      <div class="glowbox-inner">
+        <a href="https://wa.me/5511999999999?text=Ol%C3%A1%2C%20gostaria%20de%20conversar%20sobre%20um%20projeto%20com%20a%20Unitrix" target="_blank" class="btn btn-primary" style="position:relative;z-index:2">Chamar no WhatsApp →</a>
+      </div>
+    </div>
+    <p style="font-size:12px;color:var(--fg-d);margin-top:16px;position:relative;z-index:1">Resposta em até 2 horas em horário comercial</p>
+  </div>
+</section>
+
+<footer>
+  <div class="container">Unitrix &copy; 2026 — Desenvolvimento Premium Sob Demanda — unitrix.app</div>
+</footer>
+
+<script>
+// ═══════════ SPLASH ═══════════
+const splash = document.getElementById('splash');
+const navbar = document.getElementById('navbar');
+
+window.addEventListener('scroll', () => {
+  const y = window.scrollY || window.pageYOffset;
+
+  // Splash: some ao rolar, reaparece ao voltar ao topo
+  splash.classList.toggle('hidden', y > 30);
+
+  // Navbar visível após a splash
+  navbar.classList.toggle('visible', y > 80);
+
+  // Nav highlight
+  document.querySelectorAll('section[id]').forEach(s => {
+    if (y >= s.offsetTop - 160) {
+      document.querySelectorAll('.nav-links a').forEach(a => {
+        a.classList.toggle('active', a.getAttribute('href') === '#' + s.id);
+      });
+    }
+  });
+}, { passive: true });
+
+// ═══════════ REVEAL ═══════════
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    e.target.classList.toggle('visible', e.isIntersecting);
+  });
+}, { threshold: 0.10 });
+
+document.querySelectorAll('.reveal,.reveal-l,.reveal-r,.reveal-scale').forEach(el => obs.observe(el));
+</script>
+
+</body>
+</html>
