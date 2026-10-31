@@ -90,7 +90,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
         <Card className="p-5"><p className="eyebrow">Cliente desde</p><p className="mt-2 text-xl font-semibold">{formatDate(c.createdAt)}</p></Card>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2 [&>*]:min-w-0">
         <Section icon={FolderKanban} title="Projetos" href={`/admin/projetos${q}`} cta="Gerenciar" empty="Nenhum projeto." count={c.projects.length}>
           {c.projects.map((p) => (
             <li key={p.id}>
@@ -106,7 +106,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
         </Section>
         <Section icon={Wallet} title="Cobranças recentes" href={`/admin/financeiro${q}`} cta="Financeiro" empty="Nenhuma cobrança." count={c.payments.length}>
           {c.payments.map((p) => (
-            <li key={p.id} className="flex items-center justify-between gap-3 px-5 py-3">
+            <li key={p.id} className="flex items-center justify-between gap-3 px-5 py-3 min-w-0">
               <div className="min-w-0">
                 <p className="truncate text-sm">{p.description}</p>
                 <p className="text-xs text-foreground-dim">{PAYMENT_TYPE_MAP[p.type] ?? p.type} · {p.paidAt ? `pago em ${formatDate(p.paidAt)}` : p.dueDate ? `vence ${formatDate(p.dueDate)}` : "sem vencimento"}</p>

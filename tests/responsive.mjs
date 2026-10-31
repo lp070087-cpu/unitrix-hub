@@ -1,6 +1,7 @@
 // Verifica overflow horizontal e erros de console em larguras móveis/desktop.
 // Uso: BASE_URL=http://localhost:3100 node tests/responsive.mjs [dirScreenshots]
-import { chromium } from "playwright";
+import { createRequire } from "module";
+const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_PATH || "playwright");
 
 const BASE = process.env.BASE_URL || "http://localhost:3100";
 const SHOTS = process.argv[2];
@@ -31,7 +32,8 @@ let issues = 0, checks = 0;
 for (const [g, routes] of Object.entries(groups)) {
   for (const route of routes) {
     for (const w of widths) {
-      const page = await ctxs[g].newPage({ viewport: { width: w, height: 900 } });
+      const page = await ctxs[g].newPage();
+      await page.setViewportSize({ width: w, height: 900 });
       const errors = [];
       page.on("pageerror", (e) => errors.push(e.message));
       page.on("console", (m) => { if (m.type() === "error" && !/favicon|404 \(Not Found\)/.test(m.text())) errors.push(m.text()); });
