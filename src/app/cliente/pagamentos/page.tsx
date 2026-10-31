@@ -1,65 +1,74 @@
-import { auth } from "@/lib/auth";
+import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Info, Receipt } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { formatCurrency } from "@/lib/utils";
+import { requireClient } from "@/lib/server/session";
+import { Card, CardHeader } from "@/components/ui/card";
+import { EmptyState, PageHeader, Stat } from "@/components/ui/states";
+import { StatusBadge } from "@/components/shared/status-badge";
+import { formatDay } from "@/lib/billing/format";
+import { formatCurrency, PAYMENT_STATUS_MAP, PAYMENT_TYPE_MAP, toNumber } from "@/lib/utils";
+
+export const dynamic = "force-dynamic";
 
 export default async function ClientePagamentosPage() {
-  const session = await auth();
-  if (!session?.user) redirect("/auth/login");
-
-  const client = await prisma.client.findUnique({
-    where: { email: session.user.email! },
-    include: { payments: { orderBy: { createdAt: "desc" } } },
+  const { clientId } = await requireClient().catch(() => redirect("/auth/login?callbackUrl=/cliente/pagamentos"));
+  const payments = await prisma.payment.findMany({
+    where: { clientId, subscriptionId: null, status: { not: "CANCELLED" } },
+    orderBy: [{ createdAt: "desc" }],
+    select: { id: true, description: true, type: true, amount: true, status: true, dueDate: true, paidAt: true, project: { select: { id: true, title: true } } },
   });
 
-  if (!client) {
-    return <div className="flex items-center justify-center min-h-[60vh]"><p className="text-foreground-muted">Cliente não encontrado.</p></div>;
-  }
-
-  const totalPaid = client.payments.filter((p: any) => p.status === "PAID").reduce((s: number, p: any) => s + Number(p.amount), 0);
-  const totalPending = client.payments.filter((p: any) => p.status === "PENDING").reduce((s: number, p: any) => s + Number(p.amount), 0);
+  const sum = (s: string[]) => payments.filter((p) => s.includes(p.status)).reduce((t, p) => t + toNumber(p.amount), 0);
+  const paid = sum(["PAID"]);
+  const pending = sum(["PENDING"]);
+  const overdue = sum(["OVERDUE"]);
+  const open = payments.filter((p) => p.status === "PENDING" || p.status === "OVERDUE");
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
-      <div>
-        <h1 className="text-lg font-bold text-foreground">Pagamentos</h1>
-        <p className="text-xs text-foreground-muted mt-1">Histórico completo de pagamentos</p>
+    <div className="space-y-6">
+      <PageHeader eyebrow="Financeiro" title="Pagamentos" description="Cobranças dos seus projetos: entrada, saldo e serviços avulsos." actions={<Link href="/cliente/mensalidades" className="text-[13px] text-foreground-muted hover:text-foreground">Mensalidades →</Link>} />
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <Stat label="Pago" value={<span className="text-success">{formatCurrency(paid)}</span>} />
+        <Stat label="Pendente" value={formatCurrency(pending)} />
+        <Stat label="Em atraso" value={<span className={overdue > 0 ? "text-danger" : undefined}>{formatCurrency(overdue)}</span>} />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="card-premium p-5">
-          <p className="text-[10px] font-semibold text-foreground-dim uppercase tracking-wider mb-1">Total Pago</p>
-          <p className="text-xl font-black text-green-400 font-mono">{formatCurrency(totalPaid)}</p>
-        </div>
-        <div className="card-premium p-5">
-          <p className="text-[10px] font-semibold text-foreground-dim uppercase tracking-wider mb-1">Total Pendente</p>
-          <p className="text-xl font-black text-yellow-400 font-mono">{formatCurrency(totalPending)}</p>
-        </div>
-      </div>
-
-      {client.payments.length === 0 ? (
-        <div className="flex flex-col items-center py-20 text-center">
-          <p className="text-sm text-foreground-muted">Nenhum pagamento registrado.</p>
-        </div>
-      ) : (
-        <div className="card-premium overflow-hidden">
-          <div className="grid grid-cols-[2fr,1fr,1fr,1fr] gap-4 px-5 py-2.5 bg-surface-hover text-[10px] font-bold text-foreground-dim uppercase tracking-wider">
-            <span>Descrição</span><span>Tipo</span><span>Valor</span><span>Status</span>
-          </div>
-          {client.payments.map((p: any) => (
-            <div key={p.id} className="grid grid-cols-[2fr,1fr,1fr,1fr] gap-4 px-5 py-3 border-b border-border last:border-0 items-center text-sm hover:bg-surface-hover transition-colors">
-              <span className="font-semibold">{p.description}</span>
-              <span className="text-[11px] text-foreground-muted">
-                {p.type === "DEPOSIT" ? "Entrada (50%)" : p.type === "FINAL_BALANCE" ? "Saldo Final (50%)" : "Mensalidade"}
-              </span>
-              <span className="font-mono text-xs font-bold">{formatCurrency(Number(p.amount))}</span>
-              <span className={`text-[11px] font-semibold ${p.status === "PAID" ? "text-green-400" : p.status === "OVERDUE" ? "text-red-400" : "text-yellow-400"}`}>
-                {p.status === "PAID" ? "Pago" : p.status === "OVERDUE" ? "Atrasado" : "Pendente"}
-              </span>
-            </div>
-          ))}
+      {open.length > 0 && (
+        <div className="flex items-start gap-3 rounded-lg border border-border bg-surface p-4">
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-accent" strokeWidth={1.6} />
+          <p className="text-[13px] leading-relaxed text-foreground-muted">
+            A Unitrix enviará os dados de pagamento (Pix, boleto ou transferência) pelos canais combinados. Após o recebimento, a confirmação aparece aqui automaticamente.
+          </p>
         </div>
       )}
+
+      <Card>
+        <CardHeader title="Histórico" description={`${payments.length} ${payments.length === 1 ? "cobrança" : "cobranças"}`} />
+        {payments.length === 0 ? (
+          <EmptyState icon={Receipt} title="Nenhuma cobrança" description="As cobranças dos seus projetos aparecem aqui." className="border-t border-border" />
+        ) : (
+          <ul className="divide-y divide-border border-t border-border">
+            {payments.map((p) => (
+              <li key={p.id} className="flex items-start justify-between gap-4 px-5 py-4">
+                <div className="min-w-0">
+                  <p className="truncate text-sm text-foreground">{p.description}</p>
+                  <p className="mt-0.5 truncate text-xs text-foreground-muted">
+                    {PAYMENT_TYPE_MAP[p.type] ?? p.type}
+                    {p.project && <> · <Link href={`/cliente/projetos/${p.project.id}`} className="hover:text-foreground">{p.project.title}</Link></>}
+                  </p>
+                  <p className="num mt-1 text-2xs text-foreground-dim">{p.status === "PAID" ? `Pago em ${formatDay(p.paidAt)}` : p.dueDate ? `Vencimento ${formatDay(p.dueDate)}` : "Vencimento a definir"}</p>
+                </div>
+                <div className="flex shrink-0 flex-col items-end gap-1.5">
+                  <span className="num text-sm text-foreground">{formatCurrency(p.amount)}</span>
+                  <StatusBadge map={PAYMENT_STATUS_MAP} status={p.status} />
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
     </div>
   );
 }

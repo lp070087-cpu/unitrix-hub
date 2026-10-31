@@ -1,28 +1,37 @@
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
-import { redirect } from "next/navigation";
-import { AdminHeader } from "@/components/layout/admin-sidebar";
-import { ProjetosClient } from "./projetos-client";
+import { requireAdmin } from "@/lib/server/session";
+import { serialize } from "@/lib/utils";
+import { PageHeader } from "@/components/ui/states";
+import { ProjectsBoard } from "./projects-board";
+import { NewProjectDialog } from "./new-project-dialog";
 
-async function getProjetos() {
-  const projetos = await prisma.project.findMany({
-    orderBy: { createdAt: "desc" },
-    include: {
-      client: { select: { id: true, name: true } },
-      milestones: { orderBy: { order: "asc" } },
-      payments: true,
-    },
-  });
-  return JSON.parse(JSON.stringify(projetos));
-}
+export const dynamic = "force-dynamic";
 
-async function getClients() {
-  return prisma.client.findMany({ select: { id: true, name: true, company: true }, orderBy: { name: "asc" } });
-}
+export default async function AdminProjetosPage() {
+  await requireAdmin();
+  const [projects, clients] = await Promise.all([
+    prisma.project.findMany({
+      orderBy: [{ updatedAt: "desc" }],
+      select: {
+        id: true, title: true, status: true, progress: true, startDate: true, endDate: true, totalValue: true, stageChangedAt: true, updatedAt: true,
+        client: { select: { id: true, name: true, company: true } },
+        delivery: { select: { status: true } },
+        payments: { where: { type: { in: ["DEPOSIT", "FINAL_BALANCE"] }, status: { not: "CANCELLED" } }, select: { status: true } },
+        _count: { select: { milestones: true } },
+      },
+    }),
+    prisma.client.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, company: true } }),
+  ]);
 
-export default async function ProjetosPage() {
-  const session = await auth();
-  if (!session?.user) redirect("/auth/login");
-  const [projetos, clients] = await Promise.all([getProjetos(), getClients()]);
-  return <><AdminHeader title="Projetos" /><ProjetosClient projetos={projetos} clients={clients} /></>;
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        eyebrow="Operação"
+        title="Projetos"
+        description="Pipeline de produção, prazos e liberação de entregas."
+        actions={<NewProjectDialog clients={serialize(clients)} />}
+      />
+      <ProjectsBoard projects={serialize(projects)} clients={serialize(clients)} />
+    </div>
+  );
 }

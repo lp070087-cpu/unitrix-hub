@@ -1,96 +1,76 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 interface TimelinePrazoProps {
-  startDate: string;
-  endDate: string;
+  startDate: string | Date | null | undefined;
+  endDate: string | Date | null | undefined;
   label?: string;
   showDays?: boolean;
+  /** Projeto concluído/entregue: não sinaliza atraso. */
+  completed?: boolean;
+  className?: string;
 }
 
-export function TimelinePrazo({ startDate, endDate, label, showDays = true }: TimelinePrazoProps) {
-  const start = new Date(startDate).getTime();
-  const end = new Date(endDate).getTime();
-  const total = end - start;
+const DAY = 86_400_000;
+const fmt = (d: number) => new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", timeZone: "UTC" }).format(new Date(d));
 
-  const [now, setNow] = useState(Date.now());
-
+/** Linha do tempo do prazo: decorrido x total, com marcador de hoje. */
+export function TimelinePrazo({ startDate, endDate, label = "Prazo", showDays = true, completed, className }: TimelinePrazoProps) {
+  const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
-    const interval = setInterval(() => setNow(Date.now()), 60000); // atualiza a cada minuto
-    return () => clearInterval(interval);
+    const t = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(t);
   }, []);
 
-  const elapsed = Math.max(0, now - start);
-  const progress = Math.min(100, Math.round((elapsed / total) * 100));
-  const diasRestantes = Math.max(0, Math.ceil((end - now) / (1000 * 60 * 60 * 24)));
-  const diasTotais = Math.ceil(total / (1000 * 60 * 60 * 24));
-  const diasPassados = Math.min(diasTotais, Math.floor(elapsed / (1000 * 60 * 60 * 24)));
+  if (!startDate || !endDate) {
+    return (
+      <div className={cn("space-y-2", className)}>
+        <div className="flex items-center justify-between text-xs">
+          <span className="eyebrow">{label}</span>
+        </div>
+        <p className="text-[13px] text-foreground-dim">Prazo ainda não definido.</p>
+      </div>
+    );
+  }
 
-  const statusColor =
-    progress >= 100 ? "bg-green-500" :
-    progress >= 75 ? "bg-yellow-500" :
-    progress >= 50 ? "bg-accent" :
-    "bg-blue-500";
+  const start = new Date(startDate).getTime();
+  const end = new Date(endDate).getTime();
+  const total = Math.max(DAY, end - start);
+  const pct = Math.min(100, Math.max(0, ((now - start) / total) * 100));
+  const daysTotal = Math.max(1, Math.round(total / DAY));
+  const daysLeft = Math.ceil((end - now) / DAY);
+  const late = !completed && now > end;
+  const notStarted = now < start;
 
-  const statusLabel =
-    progress >= 100 ? "Concluído" :
-    progress >= 75 ? "Quase lá" :
-    progress >= 50 ? "Na metade" :
-    progress >= 25 ? "Avançando" :
-    "Iniciando";
+  let status: string;
+  if (completed) status = "Concluído";
+  else if (late) status = `${Math.abs(daysLeft)} ${Math.abs(daysLeft) === 1 ? "dia" : "dias"} de atraso`;
+  else if (notStarted) status = `Começa em ${Math.ceil((start - now) / DAY)} dias`;
+  else status = daysLeft <= 0 ? "Entrega hoje" : `${daysLeft} ${daysLeft === 1 ? "dia restante" : "dias restantes"}`;
 
   return (
-    <div className="space-y-3">
-      {/* Info row */}
-      <div className="flex items-center justify-between text-xs">
-        <span className="text-foreground-muted">
-          {label || "Prazo de Entrega"}
-        </span>
-        <span className="font-mono font-bold text-accent">
-          {progress}%
-        </span>
+    <div className={cn("space-y-2.5", className)}>
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="eyebrow">{label}</span>
+        {showDays && (
+          <span className={cn("text-xs num", late ? "text-danger" : completed ? "text-success" : "text-foreground-muted")}>{status}</span>
+        )}
       </div>
-
-      {/* Barra de progresso */}
-      <div className="w-full h-3 bg-surface rounded-full overflow-hidden">
-        <motion.div
-          className={`h-full rounded-full ${statusColor}`}
-          initial={{ width: 0 }}
-          animate={{ width: `${progress}%` }}
-          transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
+      <div className="relative h-1.5 w-full rounded-full bg-surface-hover" role="progressbar" aria-label={label} aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100}>
+        <div
+          className={cn("h-full rounded-full transition-[width] duration-700 ease-out", late ? "bg-danger/70" : completed ? "bg-success/70" : "bg-accent")}
+          style={{ width: `${completed ? 100 : pct}%` }}
         />
+        {!completed && !late && !notStarted && (
+          <span className="absolute top-1/2 h-3 w-px -translate-y-1/2 bg-foreground/70" style={{ left: `${pct}%` }} aria-hidden />
+        )}
       </div>
-
-      {/* Status + datas */}
-      {showDays && (
-        <div className="flex items-center justify-between text-[11px]">
-          <span className={`font-semibold ${
-            progress >= 100 ? "text-green-400" :
-            progress >= 75 ? "text-yellow-400" :
-            "text-foreground-dim"
-          }`}>
-            {statusLabel}
-          </span>
-          <span className="text-foreground-dim">
-            {progress >= 100 ? (
-              "Prazo concluído"
-            ) : (
-              <>
-                <span className="text-foreground-muted font-semibold">{diasRestantes} dias</span> restantes
-                <span className="text-foreground-dim mx-1">·</span>
-                {diasPassados}/{diasTotais} dias
-              </>
-            )}
-          </span>
-        </div>
-      )}
-
-      {/* Datas */}
-      <div className="flex items-center justify-between text-[10px] text-foreground-dim">
-        <span>Início: {new Date(startDate).toLocaleDateString("pt-BR")}</span>
-        <span>Entrega: {new Date(endDate).toLocaleDateString("pt-BR")}</span>
+      <div className="flex items-center justify-between text-2xs text-foreground-dim num">
+        <span>{fmt(start)}</span>
+        {showDays && <span className="hidden sm:inline">{daysTotal} dias</span>}
+        <span>{fmt(end)}</span>
       </div>
     </div>
   );
