@@ -50,6 +50,8 @@ model Client {
   notifications Notification[]
   subscriptions Subscription[]
   payments      Payment[]
+  briefings     Briefing[]
+  leads         Lead[]
 }
 
 model Presentation {
@@ -63,40 +65,87 @@ model Presentation {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
+  acceptedAt     DateTime?
+  acceptedByName String?
+  acceptedIp     String?
+
   clientId    String
-  client      Client @relation(fields: [clientId], references: [id])
+  client      Client   @relation(fields: [clientId], references: [id])
   createdById String
-  createdBy   User   @relation(fields: [createdById], references: [id])
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  projectId   String?
+  project     Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([clientId])
+  @@index([projectId])
 }
 
 model Contract {
-  id               String    @id @default(cuid())
-  title            String
-  slug             String    @unique
-  scope            String
-  deadline         DateTime
-  value            Decimal   @db.Decimal(10, 2)
-  conditions       String?
-  status           String    @default("DRAFT")
-  clientName       String
-  clientDocument   String?
-  clientCompany    String?
-  projectType      String?
-  startDate        DateTime?
-  endDate          DateTime?
-  readConfirmed    Boolean   @default(false)
-  readConfirmedAt  DateTime?
-  signatureData    String?
-  signatureIp      String?
-  signatureBrowser String?
-  signedAt         DateTime?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  id                 String    @id @default(cuid())
+  title              String
+  slug               String    @unique
+  scope              String
+  deadline           DateTime
+  value              Decimal   @db.Decimal(10, 2)
+  conditions         String?
+  status             String    @default("DRAFT")
+  clientName         String
+  clientDocument     String?
+  clientCompany      String?
+  projectType        String?
+  startDate          DateTime?
+  endDate            DateTime?
+  readConfirmed      Boolean   @default(false)
+  readConfirmedAt    DateTime?
+  signatureData      String?
+  signatureIp        String?
+  signatureBrowser   String?
+  signedAt           DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  deliveryPeriod     String?
+  version            Int       @default(1)
+  termsAccepted      Boolean   @default(false)
+  termsAcceptedAt    DateTime?
+  sentAt             DateTime?
+  viewedAt           DateTime?
+  signatureUserAgent String?
+  signatureHash      String?
+  contentSnapshot    Json?
+  supersededAt       DateTime?
+  signerName         String?
+  signerDocument     String?
 
   clientId    String
   client      Client @relation(fields: [clientId], references: [id])
   createdById String
   createdBy   User   @relation(fields: [createdById], references: [id])
+  projectId   String?
+  project     Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  previousVersionId String?   @unique
+  previousVersion   Contract? @relation("ContractVersions", fields: [previousVersionId], references: [id], onDelete: SetNull)
+  nextVersion       Contract? @relation("ContractVersions")
+
+  events ContractEvent[]
+
+  @@index([clientId])
+  @@index([projectId])
+}
+
+model ContractEvent {
+  id        String   @id @default(cuid())
+  action    String
+  actor     String?
+  ip        String?
+  userAgent String?
+  details   Json?
+  createdAt DateTime @default(now())
+
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  @@index([contractId])
 }
 
 model Payment {
@@ -110,28 +159,45 @@ model Payment {
   method      String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  chargeKey   String?
+  confirmedBy String?
+  notes       String?
 
-  clientId  String
-  client    Client   @relation(fields: [clientId], references: [id])
-  projectId String?
-  project   Project? @relation(fields: [projectId], references: [id])
+  clientId       String
+  client         Client        @relation(fields: [clientId], references: [id])
+  projectId      String?
+  project        Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  subscriptionId String?
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  @@unique([projectId, chargeKey])
+  @@unique([subscriptionId, chargeKey])
+  @@index([clientId, status])
 }
 
 model Project {
-  id          String    @id @default(cuid())
-  title       String
-  description String?
-  progress    Int       @default(0)
-  status      String    @default("PLANNING")
-  startDate   DateTime?
-  endDate     DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id             String    @id @default(cuid())
+  title          String
+  description    String?
+  progress       Int       @default(0)
+  status         String    @default("PLANNING")
+  startDate      DateTime?
+  endDate        DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  stageChangedAt DateTime?
+  internalNotes  String?
+  totalValue     Decimal?  @db.Decimal(10, 2)
 
-  clientId   String
-  client     Client             @relation(fields: [clientId], references: [id])
-  milestones ProjectMilestone[]
-  payments   Payment[]
+  clientId      String
+  client        Client             @relation(fields: [clientId], references: [id])
+  milestones    ProjectMilestone[]
+  payments      Payment[]
+  briefing      Briefing?
+  delivery      Delivery?
+  presentations Presentation[]
+  contracts     Contract[]
+  updates       ProjectUpdate[]
 }
 
 model ProjectMilestone {
@@ -148,6 +214,93 @@ model ProjectMilestone {
   project   Project @relation(fields: [projectId], references: [id])
 }
 
+model ProjectUpdate {
+  id        String   @id @default(cuid())
+  title     String
+  message   String
+  visible   Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+model Briefing {
+  id                  String    @id @default(cuid())
+  title               String
+  status              String    @default("DRAFT")
+  projectKind         String?
+  niche               String?
+  companyName         String?
+  mainGoal            String?
+  targetAudience      String?
+  productsServices    String?
+  references          String?
+  competitors         String?
+  desiredFeatures     String?
+  visualStyle         String?
+  preferredColors     String?
+  avoidedColors       String?
+  hasLogo             Boolean?
+  domain              String?
+  hosting             String?
+  integrations        String?
+  needsAi             Boolean?
+  aiNeeds             String?
+  notes               String?
+  additionalInfo      String?
+  submittedAt         DateTime?
+  reviewedAt          DateTime?
+  revisionNote        String?
+  revisionRequestedAt DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  clientId  String
+  client    Client         @relation(fields: [clientId], references: [id])
+  projectId String?        @unique
+  project   Project?       @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  files     BriefingFile[]
+
+  @@index([clientId])
+  @@index([status])
+}
+
+model BriefingFile {
+  id          String   @id @default(cuid())
+  kind        String   @default("OTHER")
+  label       String
+  externalUrl String?
+  storageKey  String?
+  mimeType    String?
+  sizeBytes   Int?
+  createdAt   DateTime @default(now())
+
+  briefingId String
+  briefing   Briefing @relation(fields: [briefingId], references: [id], onDelete: Cascade)
+
+  @@index([briefingId])
+}
+
+model Delivery {
+  id            String    @id @default(cuid())
+  status        String    @default("BLOCKED")
+  link          String?
+  files         Json?
+  credentials   Json?
+  documentation String?
+  notes         String?
+  blockedReason String?
+  releasedAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  projectId String  @unique
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
 model Plan {
   id          String   @id @default(cuid())
   name        String
@@ -156,6 +309,7 @@ model Plan {
   interval    String   @default("MONTHLY")
   features    Json?
   active      Boolean  @default(true)
+  category    String   @default("SERVICE")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -165,16 +319,27 @@ model Plan {
 }
 
 model Subscription {
-  id          String    @id @default(cuid())
-  status      String    @default("ACTIVE")
-  startedAt   DateTime  @default(now())
-  canceledAt  DateTime?
-  nextBilling DateTime?
+  id           String    @id @default(cuid())
+  status       String    @default("ACTIVE")
+  startedAt    DateTime  @default(now())
+  canceledAt   DateTime?
+  nextBilling  DateTime?
+  pausedAt     DateTime?
+  cancelReason String?
+  price        Decimal?  @db.Decimal(10, 2)
+  billingDay   Int?
+  notes        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @default(now()) @updatedAt
 
   clientId String
-  client   Client @relation(fields: [clientId], references: [id])
+  client   Client    @relation(fields: [clientId], references: [id])
   planId   String
-  plan     Plan   @relation(fields: [planId], references: [id])
+  plan     Plan      @relation(fields: [planId], references: [id])
+  payments Payment[]
+
+  @@index([clientId])
+  @@index([status])
 }
 
 model Notification {
@@ -184,8 +349,37 @@ model Notification {
   type      String   @default("INFO")
   read      Boolean  @default(false)
   link      String?
+  audience  String   @default("CLIENT")
   createdAt DateTime @default(now())
 
-  clientId String
-  client   Client @relation(fields: [clientId], references: [id])
+  clientId String?
+  client   Client? @relation(fields: [clientId], references: [id], onDelete: Restrict)
+
+  @@index([audience, read])
+  @@index([clientId])
+}
+
+model Lead {
+  id          String   @id @default(cuid())
+  name        String
+  company     String?
+  whatsapp    String
+  email       String
+  projectType String
+  description String
+  budgetRange String?
+  status      String   @default("NEW")
+  source      String   @default("landing")
+  notes       String?
+  ipHash      String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  convertedClientId String?
+  convertedClient   Client? @relation(fields: [convertedClientId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([ipHash, createdAt])
 }

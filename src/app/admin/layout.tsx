@@ -1,26 +1,23 @@
-import { AdminSidebar } from "@/components/layout/admin-sidebar";
-import { SidebarProvider } from "@/components/layout/sidebar-context";
-import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { AdminShell } from "@/components/layout/nav-config";
 
-export default async function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export const dynamic = "force-dynamic";
+
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
-    redirect("/auth/login");
-  }
+  if (!session?.user) redirect("/auth/login?callbackUrl=/admin");
+  if (session.user.role !== "ADMIN") redirect("/cliente");
+
+  const [unread, newLeads] = await Promise.all([
+    prisma.notification.count({ where: { audience: "ADMIN", read: false } }).catch(() => 0),
+    prisma.lead.count({ where: { status: "NEW" } }).catch(() => 0),
+  ]);
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen bg-background">
-        <AdminSidebar />
-        <main className="pl-[240px] transition-all duration-200">
-          {children}
-        </main>
-      </div>
-    </SidebarProvider>
+    <AdminShell user={{ name: session.user.name, email: session.user.email }} unread={unread} newLeads={newLeads}>
+      {children}
+    </AdminShell>
   );
 }

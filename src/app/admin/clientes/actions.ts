@@ -1,111 +1,109 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/server/session";
+import { safe, UserError } from "@/lib/server/action";
 
-/** Require authenticated ADMIN session — throws if not met. */
-async function requireAdmin() {
-  const session = await auth();
-  if (!session?.user) throw new Error("Não autenticado");
-  if (session.user.role !== "ADMIN") throw new Error("Acesso não autorizado");
-  return session;
-}
+const opt = (max = 200) => z.string().trim().max(max).optional().transform((v) => (v ? v : undefined));
 
 const clientSchema = z.object({
-  name: z.string().min(2, "Nome obrigatório"),
-  company: z.string().optional(),
-  document: z.string().optional(),
-  email: z.string().email("Email inválido"),
-  phone: z.string().optional(),
-  address: z.string().optional(),
-  city: z.string().optional(),
-  segment: z.string().optional(),
-  projectType: z.string().optional(),
-  budget: z.coerce.number().optional(),
+  name: z.string().trim().min(2, "Informe o nome").max(120),
+  company: opt(120),
+  document: opt(30),
+  email: z.string().trim().toLowerCase().email("E-mail inválido").max(160),
+  phone: opt(30),
+  address: opt(200),
+  city: opt(80),
+  segment: opt(80),
+  projectType: opt(80),
+  budget: z.preprocess((v) => (v === "" || v == null ? undefined : String(v).replace(",", ".")), z.coerce.number().nonnegative("Orçamento inválido").max(99999999).optional()),
   status: z.string().default("LEAD"),
-  password: z.string().min(6, "Senha mínima de 6 caracteres").optional(),
+  password: z.string().max(100).optional().transform((v) => (v ? v : undefined)).refine((v) => !v || v.length >= 8, "A senha deve ter ao menos 8 caracteres"),
 });
 
+async function assertEmailFree(email: string, exceptClientId?: string) {
+  const [admin, client] = await Promise.all([
+    prisma.user.findUnique({ where: { email }, select: { id: true } }),
+    prisma.client.findUnique({ where: { email }, select: { id: true } }),
+  ]);
+  if (admin) throw new UserError("Este e-mail pertence a um usuário administrativo");
+  if (client && client.id !== exceptClientId) throw new UserError("Já existe um cliente com este e-mail");
+}
+
 export async function createClient(formData: FormData) {
-  const session = await requireAdmin();
-
-  const raw = Object.fromEntries(formData);
-  const parsed = clientSchema.parse(raw);
-
-  let passwordHash: string | undefined;
-  if (parsed.password) {
-    passwordHash = await bcrypt.hash(parsed.password, 12);
-  }
-
-  const client = await prisma.client.create({
-    data: {
-      name: parsed.name,
-      company: parsed.company,
-      document: parsed.document,
-      email: parsed.email,
-      phone: parsed.phone,
-      address: parsed.address,
-      city: parsed.city,
-      segment: parsed.segment,
-      projectType: parsed.projectType,
-      budget: parsed.budget,
-      status: parsed.status,
-      passwordHash,
-      createdById: session.user.id,
-    },
-  });
-
-  revalidatePath("/admin/clientes");
-  return client;
+  return safe(async () => {
+    const session = await requireAdmin();
+    const parsed = clientSchema.parse(Object.fromEntries(formData));
+    await assertEmailFree(parsed.email);
+    const { password, ...data } = parsed;
+    const client = await prisma.client.create({
+      data: { ...data, passwordHash: password ? await bcrypt.hash(password, 12) : undefined, createdById: session.user.id },
+      select: { id: true },
+    });
+    const leadId = formData.get("leadId");
+    if (typeof leadId === "string" && leadId) {
+      await prisma.lead.updateMany({ where: { id: leadId }, data: { status: "CONVERTED", convertedClientId: client.id } });
+      revalidatePath("/admin/solicitacoes");
+    }
+    revalidatePath("/admin/clientes");
+    return client;
+  }, "Cliente cadastrado");
 }
 
 export async function updateClient(id: string, formData: FormData) {
-  await requireAdmin();
+  return safe(async () => {
+    await requireAdmin();
+    const parsed = clientSchema.parse(Object.fromEntries(formData));
+    await assertEmailFree(parsed.email, id);
+    const { password, ...rest } = parsed;
+    const data: Record<string, unknown> = {
+      ...rest,
+      company: rest.company ?? null, document: rest.document ?? null, phone: rest.phone ?? null, address: rest.address ?? null,
+      city: rest.city ?? null, segment: rest.segment ?? null, projectType: rest.projectType ?? null, budget: rest.budget ?? null,
+    };
+    if (password) data.passwordHash = await bcrypt.hash(password, 12);
+    await prisma.client.update({ where: { id }, data, select: { id: true } });
+    revalidatePath("/admin/clientes");
+    revalidatePath(`/admin/clientes/${id}`);
+  }, "Cliente atualizado");
+}
 
-  const raw = Object.fromEntries(formData);
-  const parsed = clientSchema.partial().parse(raw);
+export async function updateClientStatus(id: string, status: string) {
+  return safe(async () => {
+    await requireAdmin();
+    const s = z.enum(["LEAD", "BRIEFING", "PROPOSAL_SENT", "NEGOTIATION", "CONTRACTED", "IN_PROGRESS", "COMPLETED", "SUBSCRIBER", "CANCELLED"]).parse(status);
+    await prisma.client.update({ where: { id }, data: { status: s } });
+    revalidatePath(`/admin/clientes/${id}`);
+    revalidatePath("/admin/clientes");
+  }, "Status atualizado");
+}
 
-  const data: Record<string, unknown> = { ...parsed };
-  if (parsed.password) {
-    data.passwordHash = await bcrypt.hash(parsed.password, 12);
-  }
-  delete data.password;
-
-  const client = await prisma.client.update({ where: { id }, data });
-  revalidatePath("/admin/clientes");
-  return client;
+export async function revokeClientAccess(id: string) {
+  return safe(async () => {
+    await requireAdmin();
+    await prisma.client.update({ where: { id }, data: { passwordHash: null } });
+    revalidatePath(`/admin/clientes/${id}`);
+  }, "Acesso ao portal revogado");
 }
 
 export async function deleteClient(id: string) {
-  await requireAdmin();
-
-  await prisma.client.delete({ where: { id } });
-  revalidatePath("/admin/clientes");
-}
-
-export async function getClientById(id: string) {
-  const session = await auth();
-  if (!session?.user) throw new Error("Não autenticado");
-
-  // Admin sees all; clients only see their own data
-  const client = await prisma.client.findUnique({
-    where: { id },
-    include: {
-      presentations: true,
-      contracts: true,
-      projects: { include: { milestones: true } },
-      payments: true,
-      subscriptions: { include: { plan: true } },
-    },
-  });
-
-  // If client, verify they own this record
-  if (session.user.role !== "ADMIN" && client?.email !== session.user.email) {
-    throw new Error("Acesso não autorizado");
-  }
-
-  return client;
+  return safe(async () => {
+    await requireAdmin();
+    const c = await prisma.client.findUnique({
+      where: { id },
+      select: { _count: { select: { projects: true, contracts: true, payments: true, subscriptions: true, presentations: true, briefings: true } } },
+    });
+    if (!c) throw new UserError("Cliente não encontrado");
+    const linked = Object.values(c._count).reduce((a, b) => a + b, 0);
+    if (linked > 0) throw new UserError("Cliente possui registros vinculados. Altere o status para Cancelado em vez de excluir.");
+    await prisma.$transaction([
+      prisma.notification.deleteMany({ where: { clientId: id } }),
+      prisma.lead.updateMany({ where: { convertedClientId: id }, data: { convertedClientId: null } }),
+      prisma.client.delete({ where: { id } }),
+    ]);
+    revalidatePath("/admin/clientes");
+  }, "Cliente excluído");
 }

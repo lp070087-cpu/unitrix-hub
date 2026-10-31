@@ -1,5 +1,6 @@
 {
-  "buildCommand": "npx prisma generate && next build",
+  "framework": "nextjs",
   "installCommand": "npm install",
-  "framework": "nextjs"
+  "buildCommand": "npm run build",
+  "crons": [{ "path": "/api/cron/billing", "schedule": "0 9 * * *" }]
 }

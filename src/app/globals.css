@@ -2,56 +2,93 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ═══ Unitrix — Premium Technology Studio ═══
+   Grafite quente + sálvia. Accent usado com parcimônia. */
 @layer base {
-  * { @apply border-border; }
-  body {
-    @apply bg-background text-foreground antialiased;
-    font-feature-settings: "rlig" 1, "calt" 1;
+  :root {
+    --bg: 16 17 20;            /* #101114 */
+    --surface-0: 12 13 15;     /* #0C0D0F */
+    --surface: 24 26 31;       /* #181A1F */
+    --surface-2: 34 37 43;     /* #22252B */
+    --line: 44 47 54;          /* #2C2F36 */
+    --line-strong: 60 64 72;   /* #3C4048 */
+    --fg: 241 240 236;         /* #F1F0EC */
+    --fg-muted: 161 163 170;   /* #A1A3AA */
+    --fg-dim: 112 115 123;     /* #70737B */
+    --accent: 165 185 162;     /* #A5B9A2 sálvia */
+    --accent-hover: 184 202 181;
+    --accent-deep: 101 125 113;/* #657D71 */
+    --accent-fg: 16 17 20;
+    --paper: 243 241 235;      /* #F3F1EB */
+    --ink: 26 27 30;
+    --ink-muted: 92 94 100;
+    --paper-line: 222 218 208;
+    --success: 134 185 146;
+    --warning: 214 178 110;
+    --danger: 222 128 116;
+    --info: 140 168 204;
+    color-scheme: dark;
   }
+  * { @apply border-border; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    @apply bg-background text-foreground antialiased font-sans;
+    font-feature-settings: "ss01" 1, "cv11" 1;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection { background: rgb(var(--accent) / 0.3); color: rgb(var(--fg)); }
+  :focus-visible { outline: 2px solid rgb(var(--accent) / 0.7); outline-offset: 2px; }
+  h1, h2, h3 { letter-spacing: -0.015em; }
+}
+
+@layer components {
+  /* Superfícies */
+  .card-premium { @apply bg-surface border border-border rounded-lg shadow-soft transition-colors duration-200; }
+  .card-premium:hover { @apply border-border-strong; }
+  .card-flat { @apply bg-surface border border-border rounded-lg; }
+  .panel-sunken { @apply bg-surface-sunken border border-border rounded-md; }
+
+  /* Tipografia */
+  .eyebrow { @apply font-mono text-2xs uppercase tracking-[0.18em] text-foreground-dim; }
+  .display { @apply font-display font-normal tracking-[-0.02em] leading-[1.02]; }
+  .num { @apply font-mono tabular-nums; }
+
+  /* Botões legados (mantidos por compatibilidade) */
+  .btn { @apply inline-flex items-center justify-center gap-2 font-medium text-sm rounded-md transition-all duration-200 cursor-pointer select-none disabled:opacity-50 disabled:pointer-events-none; }
+  .btn-primary { @apply bg-foreground text-background h-9 px-4 hover:bg-white; }
+  .btn-ghost { @apply text-foreground border border-border bg-transparent h-9 px-4 hover:bg-surface-hover hover:border-border-strong; }
+
+  /* Campos legados */
+  .field { @apply w-full h-10 px-3 rounded-md bg-surface-sunken border border-border text-sm text-foreground placeholder:text-foreground-dim transition-colors focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/15; }
+
+  .icon-sm { width: 18px; height: 18px; flex-shrink: 0; }
 }
 
 @layer utilities {
   .text-balance { text-wrap: balance; }
-  .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-white to-foreground-muted;
+  .text-pretty { text-wrap: pretty; }
+  .glass { @apply bg-background/75 backdrop-blur-xl border border-border; }
+  .hairline-grid {
+    background-image:
+      linear-gradient(to right, rgb(var(--line) / 0.5) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(var(--line) / 0.5) 1px, transparent 1px);
+    background-size: 64px 64px;
   }
-  .text-gradient-accent {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-accent to-accent-hover;
+  .grain::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0.05; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
   }
-  .glass {
-    @apply bg-surface/80 backdrop-blur-xl border border-border;
-  }
-  .glow-accent {
-    box-shadow: 0 0 40px theme("colors.accent.glow"), 0 0 80px rgba(184, 255, 46, 0.08);
-  }
-  .card-premium {
-    @apply bg-surface border border-border rounded-lg transition-all duration-300;
-  }
-  .card-premium:hover {
-    @apply bg-surface-hover border-border-strong;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
-  }
-
-  /* Botões do sistema — usados em projetcs e detalhes */
-  .btn { @apply inline-flex items-center gap-2 font-bold text-xs uppercase tracking-wider rounded-md transition-all duration-200 cursor-pointer border-none; }
-  .btn-primary { @apply bg-accent text-background py-2 px-4; }
-  .btn-primary:hover { @apply bg-accent-hover -translate-y-0.5; box-shadow: 0 6px 20px rgba(184,255,46,0.25); }
-  .btn-ghost { @apply text-accent border border-accent/20 bg-transparent py-2 px-4; }
-  .btn-ghost:hover { @apply border-accent bg-accent/[0.04] -translate-y-0.5; }
-
-  /* Sidebar icons — tamanho fixo */
-  .icon-sm { width: 18px; height: 18px; flex-shrink: 0; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { scrollbar-width: none; }
 }
 
-/* Scrollbar premium */
-::-webkit-scrollbar { width: 6px; height: 6px; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.08); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.14); }
+::-webkit-scrollbar-thumb { background: rgb(var(--line)); border-radius: 8px; border: 2px solid rgb(var(--bg)); }
+::-webkit-scrollbar-thumb:hover { background: rgb(var(--line-strong)); }
 
-/* Signature canvas */
-.signature-canvas canvas {
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: #0A0A0C;
-}
+.signature-canvas canvas { border-radius: 8px; border: 1px solid rgb(var(--paper-line)); background: #fff; touch-action: none; }

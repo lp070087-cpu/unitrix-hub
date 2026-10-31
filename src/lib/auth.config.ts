@@ -1,43 +1,32 @@
-// ═══════════ auth.config.ts — EDGE COMPATIBLE ═══════════
-// NÃO importa bcrypt, Prisma, ou qualquer módulo nativo.
-// Usado pelo middleware (Edge Runtime).
+// auth.config.ts — compatível com Edge (usado pelo middleware). Sem Prisma/bcrypt.
 import type { NextAuthConfig } from "next-auth";
 
 export const authConfig = {
-  pages: {
-    signIn: "/auth/login",
-  },
+  pages: { signIn: "/auth/login" },
+  trustHost: true,
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
       const role = auth?.user?.role;
       const { pathname } = nextUrl;
 
-      // API routes — allow
-      if (pathname.startsWith("/api/auth")) return true;
-
-      // Auth pages — redirect to dashboard if logged in
       if (pathname.startsWith("/auth")) {
-        if (isLoggedIn) {
+        if (isLoggedIn && (role === "ADMIN" || role === "CLIENT")) {
           return Response.redirect(new URL(role === "ADMIN" ? "/admin" : "/cliente", nextUrl));
         }
         return true;
       }
-
-      // Admin routes
       if (pathname.startsWith("/admin")) {
         if (!isLoggedIn) return false;
-        if (role !== "ADMIN") return Response.redirect(new URL("/cliente", nextUrl));
+        if (role !== "ADMIN") return Response.redirect(new URL(role === "CLIENT" ? "/cliente" : "/auth/login", nextUrl));
         return true;
       }
-
-      // Client routes
       if (pathname.startsWith("/cliente")) {
         if (!isLoggedIn) return false;
+        if (role === "ADMIN") return Response.redirect(new URL("/admin", nextUrl));
+        if (role !== "CLIENT") return false;
         return true;
       }
-
-      // Everything else (landing, public pages) — allow
       return true;
     },
     async jwt({ token, user }) {
@@ -49,14 +38,12 @@ export const authConfig = {
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.role = (token.role as string) || "CLIENT";
+        session.user.role = (token.role as string) || "";
         session.user.id = (token.id as string) || "";
       }
       return session;
     },
   },
-  session: {
-    strategy: "jwt",
-  },
-  providers: [], // populated in auth.ts
+  session: { strategy: "jwt", maxAge: 60 * 60 * 24 * 7 },
+  providers: [],
 } satisfies NextAuthConfig;
