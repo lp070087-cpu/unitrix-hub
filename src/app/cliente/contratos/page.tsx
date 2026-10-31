@@ -1,65 +1,63 @@
-import { auth } from "@/lib/auth";
-import { redirect } from "next/navigation";
+import Link from "next/link";
+import { ArrowUpRight, FileSignature } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { requireClient } from "@/lib/server/session";
+import { Card } from "@/components/ui/card";
+import { EmptyState, PageHeader } from "@/components/ui/states";
+import { DocStatusBadge } from "@/components/documents/status-badge";
+import { formatCurrency, formatDate } from "@/lib/utils";
+
+export const dynamic = "force-dynamic";
 
 export default async function ClienteContratosPage() {
-  const session = await auth();
-  if (!session?.user) redirect("/auth/login");
-
-  const client = await prisma.client.findUnique({
-    where: { email: session.user.email! },
-    include: { contracts: { orderBy: { createdAt: "desc" } } },
+  const { clientId } = await requireClient();
+  const contracts = await prisma.contract.findMany({
+    where: { clientId, status: { not: "DRAFT" } },
+    orderBy: { createdAt: "desc" },
+    select: { id: true, slug: true, title: true, status: true, version: true, value: true, deadline: true, signedAt: true, sentAt: true, supersededAt: true },
   });
-
-  if (!client) {
-    return <div className="flex items-center justify-center min-h-[60vh]"><p className="text-foreground-muted">Cliente não encontrado.</p></div>;
-  }
+  const pendingCount = contracts.filter((c) => c.status === "SENT" || c.status === "VIEWED").length;
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
-      <div>
-        <h1 className="text-lg font-bold text-foreground">Contratos</h1>
-        <p className="text-xs text-foreground-muted mt-1">Contratos gerados pela Unitrix</p>
-      </div>
-      {client.contracts.length === 0 ? (
-        <div className="flex flex-col items-center py-20 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-surface flex items-center justify-center mb-4">
-            <svg className="w-6 h-6 text-foreground-dim" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          </div>
-          <p className="text-sm text-foreground-muted">Nenhum contrato disponível.</p>
-        </div>
+    <div className="space-y-6">
+      <PageHeader
+        eyebrow="Documentos"
+        title="Contratos"
+        description={pendingCount ? `${pendingCount} contrato(s) aguardando sua assinatura.` : "Contratos enviados pela Unitrix para leitura e assinatura eletrônica."}
+      />
+      {contracts.length === 0 ? (
+        <Card>
+          <EmptyState icon={FileSignature} title="Nenhum contrato disponível" description="Quando a Unitrix enviar um contrato, ele aparecerá aqui para leitura e assinatura." />
+        </Card>
       ) : (
-        <div className="space-y-3">
-          {client.contracts.map((c: any) => (
-            <div key={c.id} className="card-premium p-5">
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <h3 className="text-sm font-bold text-foreground">{c.title}</h3>
-                  <p className="text-xs text-foreground-muted mt-1">{c.scope}</p>
-                </div>
-                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                  c.signedAt ? "bg-green-400/10 text-green-400" :
-                  c.readConfirmed ? "bg-yellow-400/10 text-yellow-400" :
-                  "bg-surface-hover text-foreground-dim"
-                }`}>
-                  {c.signedAt ? "Assinado" : c.readConfirmed ? "Lido" : "Pendente"}
-                </span>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-[11px]">
-                <div><span className="text-foreground-dim">Valor:</span> <span className="font-mono font-semibold text-foreground">R$ {Number(c.value).toLocaleString("pt-BR", {minimumFractionDigits: 2})}</span></div>
-                <div><span className="text-foreground-dim">Prazo:</span> <span className="font-semibold text-foreground">{new Date(c.deadline).toLocaleDateString("pt-BR")}</span></div>
-                <div><span className="text-foreground-dim">Status:</span> <span className="font-semibold">{c.status}</span></div>
-                <div>
-                  {c.signedAt ? (
-                    <span className="text-green-400">Assinado em {new Date(c.signedAt).toLocaleDateString("pt-BR")}</span>
-                  ) : (
-                    <a href={`/contrato/${c.slug}`} target="_blank" className="text-accent hover:underline font-semibold">Visualizar →</a>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+        <ul className="space-y-3">
+          {contracts.map((c) => {
+            const actionable = c.status === "SENT" || c.status === "VIEWED";
+            return (
+              <li key={c.id}>
+                <Link
+                  href={`/contrato/${c.slug}`}
+                  className="group flex flex-col gap-4 rounded-lg border border-border bg-surface p-5 transition-colors hover:border-border-strong sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <DocStatusBadge kind="contract" status={c.status} />
+                      <span className="num text-xs text-foreground-dim">v{c.version}</span>
+                    </div>
+                    <p className="mt-2 truncate text-[15px] font-medium text-foreground">{c.title}</p>
+                    <p className="mt-1 text-[13px] text-foreground-muted">
+                      <span className="num">{formatCurrency(c.value)}</span> · prazo {formatDate(c.deadline)}
+                      {c.signedAt && <> · assinado em {formatDate(c.signedAt)}</>}
+                    </p>
+                  </div>
+                  <span className={actionable ? "inline-flex items-center gap-1.5 text-sm font-medium text-accent" : "inline-flex items-center gap-1.5 text-sm text-foreground-muted group-hover:text-foreground"}>
+                    {actionable ? "Ler e assinar" : "Ver documento"} <ArrowUpRight className="h-4 w-4" strokeWidth={1.6} />
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
       )}
     </div>
   );

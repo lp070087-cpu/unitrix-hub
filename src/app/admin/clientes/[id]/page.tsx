@@ -118,7 +118,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
             </li>
           ))}
         </Section>
-        <Section icon={FileSignature} title="Contratos" href={`/admin/contratos/novo${q}`} cta="Novo contrato" empty="Nenhum contrato." count={c.contracts.length}>
+        <Section icon={FileSignature} title="Contratos" href={`/admin/contratos/novo?clientId=${c.id}`} cta="Novo contrato" empty="Nenhum contrato." count={c.contracts.length}>
           {c.contracts.map((k) => <Row key={k.id} href={`/admin/contratos/${k.id}`} title={k.title} meta={`v${k.version} · ${formatCurrency(k.value)}`} badge={<Badge tone={CONTRACT_STATUS_MAP[k.status]?.tone}>{CONTRACT_STATUS_MAP[k.status]?.label ?? k.status}</Badge>} />)}
         </Section>
         <Section icon={Presentation} title="Apresentações" href="/admin/apresentacoes" cta="Apresentações" empty="Nenhuma apresentação." count={c.presentations.length}>
